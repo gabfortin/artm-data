@@ -21,6 +21,25 @@ données rafraîchies automatiquement **chaque semaine** par une GitHub Action.
 4. C'est tout — le site est en ligne, et `update-data.yml` tourne chaque lundi
    (et peut être lancé manuellement depuis l'onglet *Actions* → *Run workflow*).
 
+### Domaine personnalisé : artm.gabfortin.com
+
+Le fichier `CNAME` à la racine est déjà en place. Il reste deux choses à
+faire côté DNS et GitHub :
+
+1. Chez le fournisseur DNS de `gabfortin.com`, ajouter un enregistrement
+   **CNAME** : `artm` → `<ton-compte-ou-organisation>.github.io.`
+   (le point final est optionnel selon le fournisseur ; certains, comme
+   Cloudflare, proposent aussi un enregistrement ALIAS/CNAME-flattening à la
+   racine si un jour tu veux `gabfortin.com` directement — pas nécessaire ici
+   puisqu'il s'agit d'un sous-domaine).
+2. Dans **Settings → Pages** du dépôt GitHub, le champ *Custom domain*
+   devrait détecter `artm.gabfortin.com` automatiquement (lu depuis le
+   fichier `CNAME`) ; cocher **Enforce HTTPS** une fois le certificat généré
+   (peut prendre jusqu'à 24 h après la propagation DNS).
+
+Si le dépôt est repoussé plus tard sans ce fichier `CNAME`, GitHub Pages le
+retire automatiquement — le remettre suffit à relier le domaine de nouveau.
+
 ## Structure
 
 ```
