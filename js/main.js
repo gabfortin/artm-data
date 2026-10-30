@@ -106,22 +106,32 @@ async function initPartsModales(d) {
   let chart;
   const build = () => {
     if (chart) chart.destroy();
+    const lineDataset = (label, data, colorVar) => ({
+      label,
+      data,
+      borderColor: cssVar(colorVar),
+      backgroundColor: cssVar(colorVar),
+      borderWidth: 2,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      tension: 0.15,
+      fill: false,
+    });
     chart = new Chart(ctx, {
-      type: "bar",
+      type: "line",
       data: {
         labels,
         datasets: [
-          { label: "Auto", data: series.auto, backgroundColor: cssVar("--series-auto"), stack: "s" },
-          { label: "Transport collectif", data: series.tc, backgroundColor: cssVar("--series-tc"), stack: "s" },
-          { label: "Actif (marche, vélo)", data: series.actif, backgroundColor: cssVar("--series-actif"), stack: "s" },
-          { label: "Scolaire", data: series.scolaire, backgroundColor: cssVar("--series-scolaire"), stack: "s" },
-          { label: "Autre", data: series.autre, backgroundColor: cssVar("--series-autre"), stack: "s" },
+          lineDataset("Auto", series.auto, "--series-auto"),
+          lineDataset("Transport collectif", series.tc, "--series-tc"),
+          lineDataset("Actif (marche, vélo)", series.actif, "--series-actif"),
+          lineDataset("Scolaire", series.scolaire, "--series-scolaire"),
+          lineDataset("Autre", series.autre, "--series-autre"),
         ],
       },
-      options: baseBarOptions({
+      options: baseLineOptions({
         yTitle: "% des déplacements",
-        yMax: 100,
-        stacked: true,
+        beginAtZero: true,
         tooltipSuffix: " %",
         tooltipDecimals: 1,
       }),
@@ -897,7 +907,7 @@ function renderHeroKPIs(achalandageSummary, mesuresBusTotal, revTotal, veloCentr
    Chart.js option builders (styles alignés sur la palette du site)
    =========================================================================== */
 
-function baseLineOptions({ yTitle, tooltipIsInt, tooltipPrefix = "", tooltipDecimals = 0 } = {}) {
+function baseLineOptions({ yTitle, yMax, beginAtZero, tooltipIsInt, tooltipPrefix = "", tooltipSuffix = "", tooltipDecimals = 0 } = {}) {
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -912,12 +922,12 @@ function baseLineOptions({ yTitle, tooltipIsInt, tooltipPrefix = "", tooltipDeci
         borderWidth: 1,
         padding: 10,
         callbacks: tooltipIsInt ? { label: (c) => `${c.dataset.label}: ${fmtInt.format(c.parsed.y)}` } :
-          { label: (c) => `${c.dataset.label}: ${tooltipPrefix}${c.parsed.y.toFixed(tooltipDecimals)}` },
+          { label: (c) => `${c.dataset.label}: ${tooltipPrefix}${c.parsed.y.toFixed(tooltipDecimals)}${tooltipSuffix}` },
       },
     },
     scales: {
       x: { ticks: { color: cssVar("--text-muted"), maxRotation: 0, autoSkip: true, font: { size: 11 } }, grid: { display: false }, border: { color: cssVar("--baseline") } },
-      y: { title: { display: !!yTitle, text: yTitle, color: cssVar("--text-muted"), font: { size: 11.5 } }, ticks: { color: cssVar("--text-muted"), font: { size: 11 } }, grid: { color: cssVar("--gridline") }, border: { display: false } },
+      y: { max: yMax, beginAtZero: !!beginAtZero, title: { display: !!yTitle, text: yTitle, color: cssVar("--text-muted"), font: { size: 11.5 } }, ticks: { color: cssVar("--text-muted"), font: { size: 11 } }, grid: { color: cssVar("--gridline") }, border: { display: false } },
     },
   };
 }
