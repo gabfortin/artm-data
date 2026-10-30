@@ -2,7 +2,7 @@
  "description": "Part modale du vélo (mode exclusif, incluant vélo électrique et BIXI) parmi tous les déplacements (24h, tous motifs) des résident·e·s de chaque arrondissement de Montréal, calculée à partir des matrices de déplacements par secteur de pondération (origine) de l'ARTM. 2018 et 2023 utilisent le même découpage de secteurs (SP23), ce qui rend la comparaison directement comparable d'une édition à l'autre.",
  "source_2023": "https://donnees.artm.quebec/catalogue/dataset/enquete-metropolitaine-2023-perspectives-mobilite",
  "source_2018": "https://donnees.artm.quebec/catalogue/dataset/enquete-origine-destination-2018",
- "methode": "Pour chaque arrondissement, somme pondérée (champ 'pond') des déplacements en mode Vélo exclusif (incluant vélo électrique et BIXI) ayant leur origine dans un des secteurs de l'arrondissement, divisée par la somme des déplacements tous modes ayant la même origine, toutes destinations confondues. Quelques secteurs chevauchent deux arrondissements (ex. 1098 Sud-Ouest/Ville-Marie) ; ils sont assignés une seule fois, à l'arrondissement principal cité dans leur description — voir SECTOR_TO_BOROUGH dans scripts/analyze_velo_secteurs.py.",
+ "methode": "Pour chaque arrondissement, somme pondérée (champ 'pond') des déplacements en mode Vélo exclusif (incluant vélo électrique et BIXI) ayant leur origine dans un des secteurs de l'arrondissement, divisée par la somme des déplacements tous modes ayant la même origine, toutes destinations confondues. Quelques secteurs chevauchent deux arrondissements (ex. 1098 Sud-Ouest/Ville-Marie) ; ils sont assignés une seule fois, à l'arrondissement principal cité dans leur description — voir SECTOR_TO_BOROUGH dans scripts/od_lib.py.",
  "arrondissements": [
   {
    "arrondissement": "Ahuntsic-Cartierville",
@@ -144,17 +144,17 @@
    "code_secteur": "2045",
    "nom_secteur": "Montréal : Le Plateau-Mont-Royal (De Lorimier)",
    "arrondissement": "Le Plateau-Mont-Royal",
-   "part_velo_pct": 17.06,
    "deplacements_total": 239698,
-   "observations_brutes": 13300
+   "observations_brutes": 13300,
+   "part_velo_pct": 17.06
   },
   "2018": {
    "code_secteur": "2045",
    "nom_secteur": "Montréal : Le Plateau-Mont-Royal (De Lorimier)",
    "arrondissement": "Le Plateau-Mont-Royal",
-   "part_velo_pct": 9.38,
    "deplacements_total": 251932,
-   "observations_brutes": 9970
+   "observations_brutes": 9970,
+   "part_velo_pct": 9.38
   }
  }
 }

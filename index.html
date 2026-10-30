@@ -100,6 +100,57 @@
           déplacements ARTM 2018/2023 — calcul détaillé dans <code class="inline">scripts/analyze_velo_secteurs.py</code>.
         </p>
       </div>
+
+      <h3 style="margin-top:34px; margin-bottom:4px">Et les autres modes, par arrondissement ?</h3>
+      <p class="section-intro" style="margin-bottom:18px">Même méthode que pour le vélo ci-dessus : part des déplacements (24 h, tous motifs) par arrondissement de résidence, 2018 vs 2023, à partir des mêmes matrices de déplacements ARTM.</p>
+
+      <div class="card">
+        <h3>Transport collectif par arrondissement, 2018 vs 2023</h3>
+        <p class="chart-caption">Transport en commun seul + TC et autre mode combiné — même regroupement que celui utilisé par l'ARTM dans ses propres tableaux de parts modales.</p>
+        <div class="stat-strip" id="stat-tc-top" style="margin-bottom:16px"></div>
+        <div class="chart-box" style="height:560px"><canvas id="chart-tc-secteurs"></canvas></div>
+        <button class="table-toggle" data-table-target="table-tc-secteurs">Voir les données en tableau</button>
+        <div class="data-table-wrap" id="table-tc-secteurs"></div>
+        <p class="callout gap" style="margin-top:14px">
+          <strong>À noter :</strong> contrairement au vélo et à la marche, la part du transport collectif a
+          <strong>reculé</strong> dans la plupart des arrondissements entre 2018 et 2023 — reflet du télétravail
+          et du recul plus général des déplacements vers le centre-ville observé à l'échelle régionale (voir
+          section Parts modales ci-dessus). Même les arrondissements les mieux desservis, comme Ville-Marie,
+          ne font pas exception.
+        </p>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <h3>Auto par arrondissement, 2018 vs 2023</h3>
+        <p class="chart-caption">Auto-conducteur et auto-passager combinés.</p>
+        <div class="stat-strip" id="stat-auto-top" style="margin-bottom:16px"></div>
+        <div class="chart-box" style="height:560px"><canvas id="chart-auto-secteurs"></canvas></div>
+        <button class="table-toggle" data-table-target="table-auto-secteurs">Voir les données en tableau</button>
+        <div class="data-table-wrap" id="table-auto-secteurs"></div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <h3>Marche par arrondissement, 2018 vs 2023</h3>
+        <p class="chart-caption">Déplacements faits exclusivement à pied.</p>
+        <div class="stat-strip" id="stat-marche-top" style="margin-bottom:16px"></div>
+        <div class="chart-box" style="height:560px"><canvas id="chart-marche-secteurs"></canvas></div>
+        <button class="table-toggle" data-table-target="table-marche-secteurs">Voir les données en tableau</button>
+        <div class="data-table-wrap" id="table-marche-secteurs"></div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <h3>Transport actif (vélo + marche) par arrondissement, 2018 vs 2023</h3>
+        <p class="chart-caption">Vélo et marche combinés — la somme des deux graphiques ci-dessus.</p>
+        <div class="stat-strip" id="stat-actif-top" style="margin-bottom:16px"></div>
+        <div class="chart-box" style="height:560px"><canvas id="chart-actif-secteurs"></canvas></div>
+        <button class="table-toggle" data-table-target="table-actif-secteurs">Voir les données en tableau</button>
+        <div class="data-table-wrap" id="table-actif-secteurs"></div>
+        <p class="callout" style="margin-top:14px">
+          Au Plateau-Mont-Royal, les modes actifs représentent désormais plus de la <strong>moitié</strong> de
+          tous les déplacements des résident·e·s (24 h, tous motifs). Source : matrices de déplacements ARTM
+          2018/2023 — calcul détaillé dans <code class="inline">scripts/analyze_modes_secteurs.py</code>.
+        </p>
+      </div>
     </div>
   </section>
 

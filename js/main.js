@@ -286,6 +286,60 @@ async function initVeloSecteurs(d) {
   );
 }
 
+// Rendu générique pour les cartes "part modale par arrondissement" (TC, auto,
+// marche, actif) — même traitement que le vélo ci-dessus, sans dupliquer le
+// code 4 fois. `block` est un des sous-objets de data/modes_secteurs.json
+// (ex. d.tc, d.auto), avec la même forme que data/velo_secteurs.json.
+function initModeSecteurs(key, block, { colorVar, unitLabel }) {
+  const statTop = document.getElementById(`stat-${key}-top`);
+  const top23 = block.secteur_max && block.secteur_max["2023"];
+  statTop.innerHTML = "";
+  if (top23) {
+    const shortName = (top23.nom_secteur || "").replace(/^Montréal\s*:\s*/, "");
+    statTop.appendChild(el("div", { class: "stat" }, [
+      el("div", { class: "stat-value" }, `${top23.part_pct.toFixed(2)} %`),
+      el("div", { class: "stat-label" }, `Secteur le plus élevé, 2023 — ${shortName} (${fmtInt.format(top23.observations_brutes)} observations)`),
+    ]));
+  }
+
+  const rows = [...block.arrondissements].sort(
+    (a, b) => (b.part_2023_pct ?? -1) - (a.part_2023_pct ?? -1)
+  );
+  const labels = rows.map((r) => r.arrondissement);
+
+  const ctx = document.getElementById(`chart-${key}-secteurs`);
+  let chart;
+  const build = () => {
+    if (chart) chart.destroy();
+    chart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          { label: "2018", data: rows.map((r) => r.part_2018_pct), backgroundColor: cssVar("--series-autre") },
+          { label: "2023", data: rows.map((r) => r.part_2023_pct), backgroundColor: cssVar(colorVar) },
+        ],
+      },
+      options: baseBarOptions({ yTitle: `% des déplacements — ${unitLabel} (24 h)`, indexAxis: "y", tooltipSuffix: " %", tooltipDecimals: 2 }),
+    });
+  };
+  build();
+  registerRedraw(build);
+
+  renderTable(
+    `table-${key}-secteurs`,
+    ["Arrondissement", "Part 2018", "Part 2023", "Variation (pts)"],
+    rows.map((r) => [
+      r.arrondissement,
+      r.part_2018_pct != null ? `${r.part_2018_pct.toFixed(2)} %` : "—",
+      r.part_2023_pct != null ? `${r.part_2023_pct.toFixed(2)} %` : "—",
+      r.part_2018_pct != null && r.part_2023_pct != null
+        ? `${(r.part_2023_pct - r.part_2018_pct >= 0 ? "+" : "")}${(r.part_2023_pct - r.part_2018_pct).toFixed(2)}`
+        : "—",
+    ])
+  );
+}
+
 /* ===========================================================================
    2) Achalandage (achalandage.json)
    =========================================================================== */
@@ -913,14 +967,19 @@ async function boot() {
   const meta = await fetchJSON("data/meta.json");
   renderSources(meta);
 
-  const [partsModales, achalandage, veloSecteurs] = await Promise.all([
+  const [partsModales, achalandage, veloSecteurs, modesSecteurs] = await Promise.all([
     fetchJSON("data/parts_modales.json"),
     fetchJSON("data/achalandage.json"),
     fetchJSON("data/velo_secteurs.json"),
+    fetchJSON("data/modes_secteurs.json"),
   ]);
 
   await initPartsModales(partsModales);
   await initVeloSecteurs(veloSecteurs);
+  initModeSecteurs("tc", modesSecteurs.tc, { colorVar: "--series-tc", unitLabel: "transport collectif" });
+  initModeSecteurs("auto", modesSecteurs.auto, { colorVar: "--series-auto", unitLabel: "auto" });
+  initModeSecteurs("marche", modesSecteurs.marche, { colorVar: "--series-5", unitLabel: "marche" });
+  initModeSecteurs("actif", modesSecteurs.actif, { colorVar: "--series-actif", unitLabel: "transport actif" });
   const achalandageSummary = await initAchalandage(achalandage, meta);
   await initTarifs(meta);
   renderParcAuto(partsModales, achalandageSummary);

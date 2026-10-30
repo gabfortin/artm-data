@@ -1,0 +1,636 @@
+{
+ "source_2023": "https://donnees.artm.quebec/catalogue/dataset/enquete-metropolitaine-2023-perspectives-mobilite",
+ "source_2018": "https://donnees.artm.quebec/catalogue/dataset/enquete-origine-destination-2018",
+ "tc": {
+  "description": "Part modale de la catégorie « transport collectif (TC seul + TC et autre mode) » parmi tous les déplacements (24h, tous motifs) des résident·e·s de chaque arrondissement de Montréal, calculée à partir des matrices de déplacements par secteur de pondération (origine) de l'ARTM. 2018 et 2023 utilisent le même découpage de secteurs (SP23), ce qui rend la comparaison directement comparable d'une édition à l'autre.",
+  "methode": "Pour chaque arrondissement, somme pondérée (champ 'pond') des déplacements en mode transport collectif (TC seul + TC et autre mode) ayant leur origine dans un des secteurs de l'arrondissement, divisée par la somme des déplacements tous modes ayant la même origine, toutes destinations confondues. Quelques secteurs chevauchent deux arrondissements (ex. 1098 Sud-Ouest/Ville-Marie) ; ils sont assignés une seule fois, à l'arrondissement principal cité dans leur description — voir SECTOR_TO_BOROUGH dans scripts/od_lib.py.",
+  "arrondissements": [
+   {
+    "arrondissement": "Ahuntsic-Cartierville",
+    "part_2018_pct": 23.87,
+    "part_2023_pct": 18.75,
+    "deplacements_total_2023": 1122116,
+    "deplacements_total_2018": 1187957
+   },
+   {
+    "arrondissement": "Anjou",
+    "part_2018_pct": 14.89,
+    "part_2023_pct": 13.09,
+    "deplacements_total_2023": 414966,
+    "deplacements_total_2018": 492252
+   },
+   {
+    "arrondissement": "Côte-des-Neiges–Notre-Dame-de-Grâce",
+    "part_2018_pct": 37.04,
+    "part_2023_pct": 32.0,
+    "deplacements_total_2023": 1221240,
+    "deplacements_total_2018": 1371623
+   },
+   {
+    "arrondissement": "L'Île-Bizard–Sainte-Geneviève",
+    "part_2018_pct": 6.79,
+    "part_2023_pct": 4.61,
+    "deplacements_total_2023": 73542,
+    "deplacements_total_2018": 78697
+   },
+   {
+    "arrondissement": "LaSalle",
+    "part_2018_pct": 19.16,
+    "part_2023_pct": 16.71,
+    "deplacements_total_2023": 549138,
+    "deplacements_total_2018": 591477
+   },
+   {
+    "arrondissement": "Lachine",
+    "part_2018_pct": 17.17,
+    "part_2023_pct": 14.21,
+    "deplacements_total_2023": 400637,
+    "deplacements_total_2018": 422155
+   },
+   {
+    "arrondissement": "Le Plateau-Mont-Royal",
+    "part_2018_pct": 28.19,
+    "part_2023_pct": 20.08,
+    "deplacements_total_2023": 866304,
+    "deplacements_total_2018": 890096
+   },
+   {
+    "arrondissement": "Le Sud-Ouest",
+    "part_2018_pct": 27.5,
+    "part_2023_pct": 23.22,
+    "deplacements_total_2023": 538789,
+    "deplacements_total_2018": 572799
+   },
+   {
+    "arrondissement": "Mercier–Hochelaga-Maisonneuve",
+    "part_2018_pct": 27.0,
+    "part_2023_pct": 22.96,
+    "deplacements_total_2023": 930118,
+    "deplacements_total_2018": 1001535
+   },
+   {
+    "arrondissement": "Montréal-Nord",
+    "part_2018_pct": 20.87,
+    "part_2023_pct": 19.51,
+    "deplacements_total_2023": 484969,
+    "deplacements_total_2018": 572670
+   },
+   {
+    "arrondissement": "Outremont",
+    "part_2018_pct": 23.43,
+    "part_2023_pct": 22.11,
+    "deplacements_total_2023": 255421,
+    "deplacements_total_2018": 245021
+   },
+   {
+    "arrondissement": "Pierrefonds-Roxboro",
+    "part_2018_pct": 12.67,
+    "part_2023_pct": 10.77,
+    "deplacements_total_2023": 431797,
+    "deplacements_total_2018": 450451
+   },
+   {
+    "arrondissement": "Rivière-des-Prairies–Pointe-aux-Trembles",
+    "part_2018_pct": 18.17,
+    "part_2023_pct": 14.0,
+    "deplacements_total_2023": 704917,
+    "deplacements_total_2018": 754249
+   },
+   {
+    "arrondissement": "Rosemont–La Petite-Patrie",
+    "part_2018_pct": 24.7,
+    "part_2023_pct": 19.7,
+    "deplacements_total_2023": 1197892,
+    "deplacements_total_2018": 1261850
+   },
+   {
+    "arrondissement": "Saint-Laurent",
+    "part_2018_pct": 19.84,
+    "part_2023_pct": 17.54,
+    "deplacements_total_2023": 949351,
+    "deplacements_total_2018": 1062847
+   },
+   {
+    "arrondissement": "Saint-Léonard",
+    "part_2018_pct": 18.25,
+    "part_2023_pct": 16.68,
+    "deplacements_total_2023": 509759,
+    "deplacements_total_2018": 571795
+   },
+   {
+    "arrondissement": "Verdun",
+    "part_2018_pct": 26.98,
+    "part_2023_pct": 21.63,
+    "deplacements_total_2023": 468218,
+    "deplacements_total_2018": 477603
+   },
+   {
+    "arrondissement": "Ville-Marie",
+    "part_2018_pct": 53.27,
+    "part_2023_pct": 43.13,
+    "deplacements_total_2023": 2294493,
+    "deplacements_total_2018": 2860028
+   },
+   {
+    "arrondissement": "Villeray–Saint-Michel–Parc-Extension",
+    "part_2018_pct": 29.9,
+    "part_2023_pct": 22.9,
+    "deplacements_total_2023": 954247,
+    "deplacements_total_2018": 988060
+   }
+  ],
+  "secteur_max": {
+   "description": "Secteur de pondération (intra-arrondissement, échelle plus fine que l'arrondissement) avec la part « transport collectif (TC seul + TC et autre mode) » la plus élevée, parmi les secteurs ayant au moins 30 observations brutes dans l'enquête (seuil de fiabilité utilisé par l'ARTM elle-même).",
+   "2023": {
+    "code_secteur": "1101",
+    "nom_secteur": "Montréal : Ville-Marie (centre-ville)",
+    "arrondissement": "Ville-Marie",
+    "part_pct": 52.12,
+    "deplacements_total": 1006554,
+    "observations_brutes": 50244
+   },
+   "2018": {
+    "code_secteur": "1101",
+    "nom_secteur": "Montréal : Ville-Marie (centre-ville)",
+    "arrondissement": "Ville-Marie",
+    "part_pct": 62.42,
+    "deplacements_total": 1468617,
+    "observations_brutes": 50341
+   }
+  }
+ },
+ "auto": {
+  "description": "Part modale de la catégorie « auto (conducteur ou passager) » parmi tous les déplacements (24h, tous motifs) des résident·e·s de chaque arrondissement de Montréal, calculée à partir des matrices de déplacements par secteur de pondération (origine) de l'ARTM. 2018 et 2023 utilisent le même découpage de secteurs (SP23), ce qui rend la comparaison directement comparable d'une édition à l'autre.",
+  "methode": "Pour chaque arrondissement, somme pondérée (champ 'pond') des déplacements en mode auto (conducteur ou passager) ayant leur origine dans un des secteurs de l'arrondissement, divisée par la somme des déplacements tous modes ayant la même origine, toutes destinations confondues. Quelques secteurs chevauchent deux arrondissements (ex. 1098 Sud-Ouest/Ville-Marie) ; ils sont assignés une seule fois, à l'arrondissement principal cité dans leur description — voir SECTOR_TO_BOROUGH dans scripts/od_lib.py.",
+  "arrondissements": [
+   {
+    "arrondissement": "Ahuntsic-Cartierville",
+    "part_2018_pct": 58.86,
+    "part_2023_pct": 56.95,
+    "deplacements_total_2023": 1122116,
+    "deplacements_total_2018": 1187957
+   },
+   {
+    "arrondissement": "Anjou",
+    "part_2018_pct": 74.54,
+    "part_2023_pct": 71.74,
+    "deplacements_total_2023": 414966,
+    "deplacements_total_2018": 492252
+   },
+   {
+    "arrondissement": "Côte-des-Neiges–Notre-Dame-de-Grâce",
+    "part_2018_pct": 42.29,
+    "part_2023_pct": 41.21,
+    "deplacements_total_2023": 1221240,
+    "deplacements_total_2018": 1371623
+   },
+   {
+    "arrondissement": "L'Île-Bizard–Sainte-Geneviève",
+    "part_2018_pct": 80.49,
+    "part_2023_pct": 84.38,
+    "deplacements_total_2023": 73542,
+    "deplacements_total_2018": 78697
+   },
+   {
+    "arrondissement": "LaSalle",
+    "part_2018_pct": 69.07,
+    "part_2023_pct": 67.86,
+    "deplacements_total_2023": 549138,
+    "deplacements_total_2018": 591477
+   },
+   {
+    "arrondissement": "Lachine",
+    "part_2018_pct": 67.41,
+    "part_2023_pct": 68.04,
+    "deplacements_total_2023": 400637,
+    "deplacements_total_2018": 422155
+   },
+   {
+    "arrondissement": "Le Plateau-Mont-Royal",
+    "part_2018_pct": 29.88,
+    "part_2023_pct": 24.23,
+    "deplacements_total_2023": 866304,
+    "deplacements_total_2018": 890096
+   },
+   {
+    "arrondissement": "Le Sud-Ouest",
+    "part_2018_pct": 45.39,
+    "part_2023_pct": 43.78,
+    "deplacements_total_2023": 538789,
+    "deplacements_total_2018": 572799
+   },
+   {
+    "arrondissement": "Mercier–Hochelaga-Maisonneuve",
+    "part_2018_pct": 52.19,
+    "part_2023_pct": 47.69,
+    "deplacements_total_2023": 930118,
+    "deplacements_total_2018": 1001535
+   },
+   {
+    "arrondissement": "Montréal-Nord",
+    "part_2018_pct": 59.49,
+    "part_2023_pct": 59.0,
+    "deplacements_total_2023": 484969,
+    "deplacements_total_2018": 572670
+   },
+   {
+    "arrondissement": "Outremont",
+    "part_2018_pct": 45.82,
+    "part_2023_pct": 41.01,
+    "deplacements_total_2023": 255421,
+    "deplacements_total_2018": 245021
+   },
+   {
+    "arrondissement": "Pierrefonds-Roxboro",
+    "part_2018_pct": 75.16,
+    "part_2023_pct": 78.41,
+    "deplacements_total_2023": 431797,
+    "deplacements_total_2018": 450451
+   },
+   {
+    "arrondissement": "Rivière-des-Prairies–Pointe-aux-Trembles",
+    "part_2018_pct": 72.35,
+    "part_2023_pct": 73.83,
+    "deplacements_total_2023": 704917,
+    "deplacements_total_2018": 754249
+   },
+   {
+    "arrondissement": "Rosemont–La Petite-Patrie",
+    "part_2018_pct": 45.01,
+    "part_2023_pct": 38.73,
+    "deplacements_total_2023": 1197892,
+    "deplacements_total_2018": 1261850
+   },
+   {
+    "arrondissement": "Saint-Laurent",
+    "part_2018_pct": 70.16,
+    "part_2023_pct": 69.23,
+    "deplacements_total_2023": 949351,
+    "deplacements_total_2018": 1062847
+   },
+   {
+    "arrondissement": "Saint-Léonard",
+    "part_2018_pct": 67.9,
+    "part_2023_pct": 65.75,
+    "deplacements_total_2023": 509759,
+    "deplacements_total_2018": 571795
+   },
+   {
+    "arrondissement": "Verdun",
+    "part_2018_pct": 50.85,
+    "part_2023_pct": 44.9,
+    "deplacements_total_2023": 468218,
+    "deplacements_total_2018": 477603
+   },
+   {
+    "arrondissement": "Ville-Marie",
+    "part_2018_pct": 26.24,
+    "part_2023_pct": 24.42,
+    "deplacements_total_2023": 2294493,
+    "deplacements_total_2018": 2860028
+   },
+   {
+    "arrondissement": "Villeray–Saint-Michel–Parc-Extension",
+    "part_2018_pct": 44.34,
+    "part_2023_pct": 42.12,
+    "deplacements_total_2023": 954247,
+    "deplacements_total_2018": 988060
+   }
+  ],
+  "secteur_max": {
+   "description": "Secteur de pondération (intra-arrondissement, échelle plus fine que l'arrondissement) avec la part « auto (conducteur ou passager) » la plus élevée, parmi les secteurs ayant au moins 30 observations brutes dans l'enquête (seuil de fiabilité utilisé par l'ARTM elle-même).",
+   "2023": {
+    "code_secteur": "4134",
+    "nom_secteur": "Montréal : L'Île-Bizard",
+    "arrondissement": "L'Île-Bizard–Sainte-Geneviève",
+    "part_pct": 84.38,
+    "deplacements_total": 73542,
+    "observations_brutes": 3886
+   },
+   "2018": {
+    "code_secteur": "4089",
+    "nom_secteur": "Montréal : Saint-Laurent (Bois-Franc, parc industriel)",
+    "arrondissement": "Saint-Laurent",
+    "part_pct": 83.74,
+    "deplacements_total": 470862,
+    "observations_brutes": 15854
+   }
+  }
+ },
+ "marche": {
+  "description": "Part modale de la catégorie « marche exclusive » parmi tous les déplacements (24h, tous motifs) des résident·e·s de chaque arrondissement de Montréal, calculée à partir des matrices de déplacements par secteur de pondération (origine) de l'ARTM. 2018 et 2023 utilisent le même découpage de secteurs (SP23), ce qui rend la comparaison directement comparable d'une édition à l'autre.",
+  "methode": "Pour chaque arrondissement, somme pondérée (champ 'pond') des déplacements en mode marche exclusive ayant leur origine dans un des secteurs de l'arrondissement, divisée par la somme des déplacements tous modes ayant la même origine, toutes destinations confondues. Quelques secteurs chevauchent deux arrondissements (ex. 1098 Sud-Ouest/Ville-Marie) ; ils sont assignés une seule fois, à l'arrondissement principal cité dans leur description — voir SECTOR_TO_BOROUGH dans scripts/od_lib.py.",
+  "arrondissements": [
+   {
+    "arrondissement": "Ahuntsic-Cartierville",
+    "part_2018_pct": 13.1,
+    "part_2023_pct": 17.79,
+    "deplacements_total_2023": 1122116,
+    "deplacements_total_2018": 1187957
+   },
+   {
+    "arrondissement": "Anjou",
+    "part_2018_pct": 8.49,
+    "part_2023_pct": 11.85,
+    "deplacements_total_2023": 414966,
+    "deplacements_total_2018": 492252
+   },
+   {
+    "arrondissement": "Côte-des-Neiges–Notre-Dame-de-Grâce",
+    "part_2018_pct": 16.8,
+    "part_2023_pct": 21.74,
+    "deplacements_total_2023": 1221240,
+    "deplacements_total_2018": 1371623
+   },
+   {
+    "arrondissement": "L'Île-Bizard–Sainte-Geneviève",
+    "part_2018_pct": 6.72,
+    "part_2023_pct": 5.29,
+    "deplacements_total_2023": 73542,
+    "deplacements_total_2018": 78697
+   },
+   {
+    "arrondissement": "LaSalle",
+    "part_2018_pct": 8.15,
+    "part_2023_pct": 11.82,
+    "deplacements_total_2023": 549138,
+    "deplacements_total_2018": 591477
+   },
+   {
+    "arrondissement": "Lachine",
+    "part_2018_pct": 11.46,
+    "part_2023_pct": 12.7,
+    "deplacements_total_2023": 400637,
+    "deplacements_total_2018": 422155
+   },
+   {
+    "arrondissement": "Le Plateau-Mont-Royal",
+    "part_2018_pct": 30.68,
+    "part_2023_pct": 38.92,
+    "deplacements_total_2023": 866304,
+    "deplacements_total_2018": 890096
+   },
+   {
+    "arrondissement": "Le Sud-Ouest",
+    "part_2018_pct": 21.54,
+    "part_2023_pct": 25.69,
+    "deplacements_total_2023": 538789,
+    "deplacements_total_2018": 572799
+   },
+   {
+    "arrondissement": "Mercier–Hochelaga-Maisonneuve",
+    "part_2018_pct": 16.2,
+    "part_2023_pct": 21.73,
+    "deplacements_total_2023": 930118,
+    "deplacements_total_2018": 1001535
+   },
+   {
+    "arrondissement": "Montréal-Nord",
+    "part_2018_pct": 16.33,
+    "part_2023_pct": 17.77,
+    "deplacements_total_2023": 484969,
+    "deplacements_total_2018": 572670
+   },
+   {
+    "arrondissement": "Outremont",
+    "part_2018_pct": 23.51,
+    "part_2023_pct": 29.09,
+    "deplacements_total_2023": 255421,
+    "deplacements_total_2018": 245021
+   },
+   {
+    "arrondissement": "Pierrefonds-Roxboro",
+    "part_2018_pct": 6.14,
+    "part_2023_pct": 5.77,
+    "deplacements_total_2023": 431797,
+    "deplacements_total_2018": 450451
+   },
+   {
+    "arrondissement": "Rivière-des-Prairies–Pointe-aux-Trembles",
+    "part_2018_pct": 6.63,
+    "part_2023_pct": 8.44,
+    "deplacements_total_2023": 704917,
+    "deplacements_total_2018": 754249
+   },
+   {
+    "arrondissement": "Rosemont–La Petite-Patrie",
+    "part_2018_pct": 23.67,
+    "part_2023_pct": 29.41,
+    "deplacements_total_2023": 1197892,
+    "deplacements_total_2018": 1261850
+   },
+   {
+    "arrondissement": "Saint-Laurent",
+    "part_2018_pct": 6.24,
+    "part_2023_pct": 8.27,
+    "deplacements_total_2023": 949351,
+    "deplacements_total_2018": 1062847
+   },
+   {
+    "arrondissement": "Saint-Léonard",
+    "part_2018_pct": 9.65,
+    "part_2023_pct": 13.1,
+    "deplacements_total_2023": 509759,
+    "deplacements_total_2018": 571795
+   },
+   {
+    "arrondissement": "Verdun",
+    "part_2018_pct": 18.67,
+    "part_2023_pct": 27.03,
+    "deplacements_total_2023": 468218,
+    "deplacements_total_2018": 477603
+   },
+   {
+    "arrondissement": "Ville-Marie",
+    "part_2018_pct": 15.33,
+    "part_2023_pct": 24.37,
+    "deplacements_total_2023": 2294493,
+    "deplacements_total_2018": 2860028
+   },
+   {
+    "arrondissement": "Villeray–Saint-Michel–Parc-Extension",
+    "part_2018_pct": 20.07,
+    "part_2023_pct": 26.11,
+    "deplacements_total_2023": 954247,
+    "deplacements_total_2018": 988060
+   }
+  ],
+  "secteur_max": {
+   "description": "Secteur de pondération (intra-arrondissement, échelle plus fine que l'arrondissement) avec la part « marche exclusive » la plus élevée, parmi les secteurs ayant au moins 30 observations brutes dans l'enquête (seuil de fiabilité utilisé par l'ARTM elle-même).",
+   "2023": {
+    "code_secteur": "2046",
+    "nom_secteur": "Montréal : Le Plateau-Mont-Royal (Saint-Louis)",
+    "arrondissement": "Le Plateau-Mont-Royal",
+    "part_pct": 43.75,
+    "deplacements_total": 234900,
+    "observations_brutes": 12438
+   },
+   "2018": {
+    "code_secteur": "1091",
+    "nom_secteur": "Montréal : Ville-Marie (Milton-Parc)",
+    "arrondissement": "Ville-Marie",
+    "part_pct": 33.25,
+    "deplacements_total": 139339,
+    "observations_brutes": 4857
+   }
+  }
+ },
+ "actif": {
+  "description": "Part modale de la catégorie « transport actif (vélo + marche) » parmi tous les déplacements (24h, tous motifs) des résident·e·s de chaque arrondissement de Montréal, calculée à partir des matrices de déplacements par secteur de pondération (origine) de l'ARTM. 2018 et 2023 utilisent le même découpage de secteurs (SP23), ce qui rend la comparaison directement comparable d'une édition à l'autre.",
+  "methode": "Pour chaque arrondissement, somme pondérée (champ 'pond') des déplacements en mode transport actif (vélo + marche) ayant leur origine dans un des secteurs de l'arrondissement, divisée par la somme des déplacements tous modes ayant la même origine, toutes destinations confondues. Quelques secteurs chevauchent deux arrondissements (ex. 1098 Sud-Ouest/Ville-Marie) ; ils sont assignés une seule fois, à l'arrondissement principal cité dans leur description — voir SECTOR_TO_BOROUGH dans scripts/od_lib.py.",
+  "arrondissements": [
+   {
+    "arrondissement": "Ahuntsic-Cartierville",
+    "part_2018_pct": 15.3,
+    "part_2023_pct": 22.59,
+    "deplacements_total_2023": 1122116,
+    "deplacements_total_2018": 1187957
+   },
+   {
+    "arrondissement": "Anjou",
+    "part_2018_pct": 9.04,
+    "part_2023_pct": 13.57,
+    "deplacements_total_2023": 414966,
+    "deplacements_total_2018": 492252
+   },
+   {
+    "arrondissement": "Côte-des-Neiges–Notre-Dame-de-Grâce",
+    "part_2018_pct": 18.61,
+    "part_2023_pct": 25.26,
+    "deplacements_total_2023": 1221240,
+    "deplacements_total_2018": 1371623
+   },
+   {
+    "arrondissement": "L'Île-Bizard–Sainte-Geneviève",
+    "part_2018_pct": 7.25,
+    "part_2023_pct": 7.53,
+    "deplacements_total_2023": 73542,
+    "deplacements_total_2018": 78697
+   },
+   {
+    "arrondissement": "LaSalle",
+    "part_2018_pct": 9.08,
+    "part_2023_pct": 13.73,
+    "deplacements_total_2023": 549138,
+    "deplacements_total_2018": 591477
+   },
+   {
+    "arrondissement": "Lachine",
+    "part_2018_pct": 12.6,
+    "part_2023_pct": 15.28,
+    "deplacements_total_2023": 400637,
+    "deplacements_total_2018": 422155
+   },
+   {
+    "arrondissement": "Le Plateau-Mont-Royal",
+    "part_2018_pct": 39.7,
+    "part_2023_pct": 53.7,
+    "deplacements_total_2023": 866304,
+    "deplacements_total_2018": 890096
+   },
+   {
+    "arrondissement": "Le Sud-Ouest",
+    "part_2018_pct": 25.32,
+    "part_2023_pct": 31.38,
+    "deplacements_total_2023": 538789,
+    "deplacements_total_2018": 572799
+   },
+   {
+    "arrondissement": "Mercier–Hochelaga-Maisonneuve",
+    "part_2018_pct": 19.51,
+    "part_2023_pct": 27.87,
+    "deplacements_total_2023": 930118,
+    "deplacements_total_2018": 1001535
+   },
+   {
+    "arrondissement": "Montréal-Nord",
+    "part_2018_pct": 16.77,
+    "part_2023_pct": 19.33,
+    "deplacements_total_2023": 484969,
+    "deplacements_total_2018": 572670
+   },
+   {
+    "arrondissement": "Outremont",
+    "part_2018_pct": 27.59,
+    "part_2023_pct": 34.73,
+    "deplacements_total_2023": 255421,
+    "deplacements_total_2018": 245021
+   },
+   {
+    "arrondissement": "Pierrefonds-Roxboro",
+    "part_2018_pct": 6.49,
+    "part_2023_pct": 7.18,
+    "deplacements_total_2023": 431797,
+    "deplacements_total_2018": 450451
+   },
+   {
+    "arrondissement": "Rivière-des-Prairies–Pointe-aux-Trembles",
+    "part_2018_pct": 6.98,
+    "part_2023_pct": 9.56,
+    "deplacements_total_2023": 704917,
+    "deplacements_total_2018": 754249
+   },
+   {
+    "arrondissement": "Rosemont–La Petite-Patrie",
+    "part_2018_pct": 28.67,
+    "part_2023_pct": 40.11,
+    "deplacements_total_2023": 1197892,
+    "deplacements_total_2018": 1261850
+   },
+   {
+    "arrondissement": "Saint-Laurent",
+    "part_2018_pct": 7.31,
+    "part_2023_pct": 9.97,
+    "deplacements_total_2023": 949351,
+    "deplacements_total_2018": 1062847
+   },
+   {
+    "arrondissement": "Saint-Léonard",
+    "part_2018_pct": 9.99,
+    "part_2023_pct": 14.26,
+    "deplacements_total_2023": 509759,
+    "deplacements_total_2018": 571795
+   },
+   {
+    "arrondissement": "Verdun",
+    "part_2018_pct": 20.56,
+    "part_2023_pct": 31.93,
+    "deplacements_total_2023": 468218,
+    "deplacements_total_2018": 477603
+   },
+   {
+    "arrondissement": "Ville-Marie",
+    "part_2018_pct": 18.3,
+    "part_2023_pct": 30.78,
+    "deplacements_total_2023": 2294493,
+    "deplacements_total_2018": 2860028
+   },
+   {
+    "arrondissement": "Villeray–Saint-Michel–Parc-Extension",
+    "part_2018_pct": 23.88,
+    "part_2023_pct": 33.57,
+    "deplacements_total_2023": 954247,
+    "deplacements_total_2018": 988060
+   }
+  ],
+  "secteur_max": {
+   "description": "Secteur de pondération (intra-arrondissement, échelle plus fine que l'arrondissement) avec la part « transport actif (vélo + marche) » la plus élevée, parmi les secteurs ayant au moins 30 observations brutes dans l'enquête (seuil de fiabilité utilisé par l'ARTM elle-même).",
+   "2023": {
+    "code_secteur": "2046",
+    "nom_secteur": "Montréal : Le Plateau-Mont-Royal (Saint-Louis)",
+    "arrondissement": "Le Plateau-Mont-Royal",
+    "part_pct": 57.45,
+    "deplacements_total": 234900,
+    "observations_brutes": 12438
+   },
+   "2018": {
+    "code_secteur": "2046",
+    "nom_secteur": "Montréal : Le Plateau-Mont-Royal (Saint-Louis)",
+    "arrondissement": "Le Plateau-Mont-Royal",
+    "part_pct": 41.01,
+    "deplacements_total": 224968,
+    "observations_brutes": 8422
+   }
+  }
+ }
+}
