@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mobilité Montréal — tableau de bord des données ARTM</title>
+<meta name="description" content="Tableau de bord indépendant construit à partir des données ouvertes de l'ARTM : achalandage du transport collectif, parts modales, tarifs, infrastructures cyclables et voies réservées pour autobus dans la région métropolitaine de Montréal." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚍</text></svg>" />
+
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<a class="skip-link" href="#principal">Aller au contenu principal</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#principal">🚍 Mobilité Montréal <small>données ARTM</small></a>
+    <nav class="main-nav" aria-label="Navigation principale">
+      <a href="#parts-modales">Parts modales</a>
+      <a href="#achalandage">Achalandage</a>
+      <a href="#tarifs">Tarifs</a>
+      <a href="#infrastructure">Infrastructures</a>
+      <a href="#carte">Carte</a>
+      <a href="#bixi">BIXI</a>
+      <a href="#methodologie">Sources</a>
+    </nav>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Changer le thème clair/sombre">◐</button>
+  </div>
+</header>
+
+<main id="principal">
+
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Portail indépendant · données ouvertes ARTM</p>
+      <h1>Qui se déplace comment dans le Grand Montréal — en chiffres vérifiables.</h1>
+      <p class="lede">
+        Ce site compile et met en forme les <a href="https://donnees.artm.quebec" target="_blank" rel="noopener">données ouvertes publiées par l'ARTM</a>
+        (et quelques sources provinciales/municipales qu'elle fédère) : achalandage du transport collectif, parts modales des déplacements,
+        évolution des tarifs, voies réservées pour autobus et réseau cyclable. <strong>Aucun chiffre n'est retouché</strong> — chaque section indique
+        sa source exacte et sa date de mise à jour. Les données d'infrastructure et d'achalandage sont rafraîchies automatiquement chaque semaine ;
+        les enquêtes de mobilité (parts modales) le sont lorsque l'ARTM publie une nouvelle édition, tous les ~5 ans.
+      </p>
+      <div class="kpi-grid" id="kpi-grid">
+        <div class="kpi-card"><div class="kpi-value">…</div><div class="kpi-label">Chargement…</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="parts-modales">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Le constat central</p>
+          <h2>Qui prend quoi, en période de pointe du matin</h2>
+          <p class="section-intro">Part des déplacements des résident·e·s du territoire de l'ARTM selon le mode utilisé, 2003–2023.
+          Calculé à partir des volumes publiés par l'ARTM pour chaque enquête origine-destination / Perspectives mobilité.</p>
+        </div>
+        <span class="source-tag">Source : enquêtes ARTM 2003–2023 · <a href="https://www.artm.quebec/wp-content/uploads/2024/10/ARTM_Enquete2023_Faits_Saillants.pdf" target="_blank" rel="noopener">rapport complet (PDF)</a></span>
+      </div>
+
+      <div class="card">
+        <h3>Parts modales — période de pointe du matin, territoire de l'ARTM</h3>
+        <p class="chart-caption">Auto (conducteur ou passager) · Transport collectif · Scolaire · Actif (marche, vélo) · Autre — calculées à partir des volumes de déplacements.</p>
+        <div class="chart-box h-320"><canvas id="chart-parts-modales"></canvas></div>
+        <button class="table-toggle" data-table-target="table-parts-modales">Voir les données en tableau</button>
+        <div class="data-table-wrap" id="table-parts-modales"></div>
+      </div>
+
+      <div class="grid-2" style="margin-top:18px">
+        <div class="card">
+          <h3>Déplacements vs distance parcourue, 24 h (2023)</h3>
+          <p class="chart-caption">L'auto pèse plus lourd en distance qu'en nombre de déplacements : les trajets en transport collectif et actif sont en moyenne plus courts.</p>
+          <div class="chart-box h-280"><canvas id="chart-trips-vs-distance"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Ce que dit l'enquête 2023</h3>
+          <div class="stat-strip" id="faits-saillants-2023"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="achalandage">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Mis à jour chaque semaine</p>
+          <h2>Achalandage du transport collectif</h2>
+          <p class="section-intro">Déplacements mensuels enregistrés sur le réseau régional et par société de transport, depuis 2019 — incluant l'effondrement puis la reprise post-pandémie.</p>
+        </div>
+        <span class="source-tag" id="achalandage-updated"></span>
+      </div>
+
+      <div class="card">
+        <h3>Achalandage régional mensuel — ARTM</h3>
+        <p class="chart-caption">Déplacements liés mensuels, ensemble du réseau ARTM. La ligne pointillée marque la moyenne mensuelle de 2019 (référence pré-pandémie).</p>
+        <div class="chart-box h-320"><canvas id="chart-achalandage-regional"></canvas></div>
+        <button class="table-toggle" data-table-target="table-achalandage-regional">Voir les données en tableau</button>
+        <div class="data-table-wrap" id="table-achalandage-regional"></div>
+      </div>
+
+      <div class="grid-2" style="margin-top:18px">
+        <div class="card">
+          <h3>Achalandage mensuel par société de transport</h3>
+          <p class="chart-caption">STM (métro + bus), RTL, STL, exo (bus + train), navettes fluviales.</p>
+          <div class="chart-box h-320"><canvas id="chart-achalandage-operateurs"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Reprise par rapport à 2019</h3>
+          <p class="chart-caption">Achalandage annuel le plus récent vs moyenne annuelle 2019, par société (base 100 = 2019).</p>
+          <div class="chart-box h-320"><canvas id="chart-recovery"></canvas></div>
+        </div>
+      </div>
+      <p class="callout" style="margin-top:14px">
+        <strong>Note de méthode :</strong> le STM, RTL, STL et le total régional comptent les <em>déplacements liés</em>
+        (une correspondance bus→métro = 1 déplacement). exo et les navettes fluviales publient des <em>déplacements non liés</em>
+        (chaque montée est comptée). Les deux ne sont pas directement comparables en valeur absolue — voir
+        <a href="#methodologie">méthodologie</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="panel" id="tarifs">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Mis à jour chaque semaine</p>
+          <h2>Le prix d'une passe mensuelle, 2018–aujourd'hui</h2>
+          <p class="section-intro">Tarif ordinaire (adulte régulier), par zone tarifaire. Montants courants, non ajustés pour l'inflation.</p>
+        </div>
+        <span class="source-tag" id="tarifs-updated"></span>
+      </div>
+      <div class="card">
+        <h3>Passe mensuelle régulière par zone</h3>
+        <p class="chart-caption">Les anciens titres TRAM1–4 (avant la refonte tarifaire de juillet 2021–2022) sont reliés à leurs zones équivalentes actuelles (A, AB, ABC, ABCD) pour obtenir une série continue.</p>
+        <div class="chart-box h-320"><canvas id="chart-tarifs"></canvas></div>
+        <button class="table-toggle" data-table-target="table-tarifs">Voir les données en tableau</button>
+        <div class="data-table-wrap" id="table-tarifs"></div>
+      </div>
+      <div class="grid-3" style="margin-top:14px" id="parc-auto-stats"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="infrastructure">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Mis à jour chaque semaine</p>
+          <h2>L'espace donné aux autobus et au vélo</h2>
+          <p class="section-intro">Longueurs calculées directement à partir des tracés géographiques officiels.</p>
+        </div>
+        <span class="source-tag" id="infra-updated"></span>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <h3>Mesures préférentielles pour autobus</h3>
+          <p class="chart-caption">Voies réservées, SRB, usage autorisé — territoire de l'ARTM.</p>
+          <div class="stat-strip" id="stat-mesures-bus"></div>
+        </div>
+        <div class="card">
+          <h3>Réseau express vélo (REV)</h3>
+          <p class="chart-caption">Agglomération de Montréal. Cible du projet : 184 km.</p>
+          <div id="rev-progress"></div>
+        </div>
+        <div class="card">
+          <h3>Réseau cyclable — agglomération de Montréal</h3>
+          <p class="chart-caption">Ne couvre pas Laval, Longueuil ni les couronnes.</p>
+          <div class="stat-strip" id="stat-velo-mtl"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <h3>Voies réservées pour autobus — cumul par année de mise en service</h3>
+        <p class="chart-caption">Km cumulés au fil du temps (les segments sans année connue dans le jeu de données ne sont pas inclus dans cette courbe).</p>
+        <div class="chart-box h-280"><canvas id="chart-bus-lanes-cumul"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="carte">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Carte interactive</p>
+          <h2>Où se trouvent ces infrastructures</h2>
+          <p class="section-intro">Activez ou désactivez les couches. Cliquez un tracé ou un point pour le détail.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="map-box" id="map"></div>
+        <div class="map-legend" id="map-legend"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="bixi">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Flux en direct</p>
+          <h2>BIXI, en ce moment <span class="pill live" id="bixi-live-pill"><span class="dotpulse"></span>en direct</span></h2>
+          <p class="section-intro">Lu directement depuis le flux GBFS public de BIXI au chargement de cette page — aucune donnée stockée.</p>
+        </div>
+        <span class="source-tag"><a href="https://gbfs.velobixi.com/gbfs/gbfs.json" target="_blank" rel="noopener">Flux GBFS officiel</a></span>
+      </div>
+      <div class="grid-3" id="bixi-stats">
+        <div class="card"><h3>…</h3></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="methodologie">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Transparence</p>
+          <h2>Méthodologie, sources et limites</h2>
+          <p class="section-intro">Ce site ne fait que mettre en forme des données publiques. Voici exactement d'où elles viennent, à quelle fréquence elles sont rafraîchies, et ce qu'elles ne montrent pas.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Jeux de données utilisés (rafraîchis chaque semaine)</h3>
+        <div class="source-list" id="source-list"></div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <h3>Jeux de données sourcés manuellement</h3>
+        <div class="source-list">
+          <div class="src-item">
+            <span class="src-name">Parts modales (enquêtes OD / Perspectives mobilité)</span>
+            <span class="src-meta">Publiées par l'ARTM tous les ~5 ans — mis à jour à la prochaine édition, pas chaque semaine</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="callout gap" style="margin-top:16px">
+        <strong>Trou de données à signaler :</strong> l'ARTM publie l'achalandage détaillé de la STM, du RTL, de la STL, d'exo
+        et des navettes fluviales — mais <strong>pas celui du REM</strong> (le jeu de données existe dans le catalogue mais retourne
+        une erreur d'autorisation à la consultation publique). Pour un conseil municipal qui investit dans ce projet, c'est une
+        question légitime à poser à l'administration et à l'ARTM.
+      </p>
+
+      <p class="callout" style="margin-top:14px">
+        <strong>Autres limites à garder en tête :</strong> le réseau cyclable détaillé par segment ne couvre que l'agglomération
+        de Montréal (pas Laval, Longueuil, ni les couronnes) ; les validations de titres (données journalières depuis 2017) ne sont
+        pas distribuées en fichier téléchargeable dans le catalogue public et ne sont donc pas incluses ici ; les longueurs de voies
+        cyclables et de mesures préférentielles sont calculées par ce site à partir des géométries officielles (grand cercle),
+        et peuvent différer légèrement des chiffres officiels arrondis publiés ailleurs.
+      </p>
+
+      <p style="margin-top:20px; font-size:13px; color:var(--text-muted)">
+        Dernière exécution du robot de mise à jour : <strong id="meta-updated-at">—</strong>.
+        Pipeline de mise à jour : <code class="inline">scripts/update_data.py</code>, exécuté chaque semaine par GitHub Actions.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>Site indépendant construit à partir des données ouvertes de l'ARTM (<a href="https://donnees.artm.quebec" target="_blank" rel="noopener">donnees.artm.quebec</a>),
+    de Données Québec, de Données Montréal et du flux GBFS public de BIXI. N'est pas un produit officiel de l'ARTM, de la Ville de Montréal ou de BIXI.
+    Toutes les données sont publiées sous leurs licences ouvertes respectives.</p>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js" integrity="sha512-c7v2mEghMrX9YKC1iSb93skFX4CVpTvFJxTiEek0DDQZc2zq/WsnlmeBARTTBr/M3Pzd9RwLZ/6ePHPFRYPldA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

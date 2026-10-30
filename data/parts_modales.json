@@ -1,0 +1,32 @@
+{
+  "description": "Parts modales des déplacements des résident·e·s du territoire de l'ARTM, telles que mesurées par les enquêtes origine-destination / enquêtes métropolitaines Perspectives mobilité (réalisées tous les ~5 ans, sauf pandémie). Ce fichier est mis à jour manuellement lors de la publication d'une nouvelle enquête, pas par le robot hebdomadaire — ces enquêtes ne paraissent pas plus souvent.",
+  "source_label": "ARTM — Enquêtes origine-destination 2003/2008/2013/2018, Enquête métropolitaine 2023 Perspectives mobilité",
+  "source_url": "https://www.artm.quebec/wp-content/uploads/2024/10/ARTM_Enquete2023_Faits_Saillants.pdf",
+  "note_methodologie": "Les parts ci-dessous pour 2003–2023 sont calculées par l'auteur de ce site à partir des volumes de déplacements en période de pointe du matin (6h–9h) publiés par l'ARTM pour le territoire de l'ARTM (tableau « Modes – période de pointe du matin », Faits saillants Enquête métropolitaine 2023, p.21). Les catégories Auto, TC (TC seul + TC et autre mode), Scolaire et Actifs sont exclusives. Les totaux par année peuvent ne pas sommer exactement à 100% par arrondi.",
+  "pointe_matin_territoire_artm": [
+    { "annee": 2003, "deplacements_total": 1808000, "auto": 1098000, "tc": 356000, "scolaire": 149000, "actif": 194000, "autre": 11000 },
+    { "annee": 2008, "deplacements_total": 1821000, "auto": 1040000, "tc": 412000, "scolaire": 150000, "actif": 207000, "autre": 12000 },
+    { "annee": 2013, "deplacements_total": 2030000, "auto": 1211000, "tc": 451000, "scolaire": 129000, "actif": 228000, "autre": 11000 },
+    { "annee": 2018, "deplacements_total": 2058000, "auto": 1197000, "tc": 477000, "scolaire": 136000, "actif": 235000, "autre": 13000 },
+    { "annee": 2023, "deplacements_total": 1855000, "auto": 1073000, "tc": 349000, "scolaire": 116000, "actif": 300000, "autre": 15000 }
+  ],
+  "parts_24h_par_nombre_deplacements": {
+    "2018": { "tc": 17, "actif": 12, "scolaire": 4, "auto": 67, "autre": 1, "modes_durables_officiel": 32 },
+    "2023": { "tc": 13, "actif": 16, "scolaire": 4, "auto": 66, "autre": 1, "modes_durables_officiel": 33 }
+  },
+  "parts_24h_par_distance_parcourue": {
+    "2018": { "tc": 20, "actif": 2, "scolaire": 3, "auto": 75, "autre": 1 },
+    "2023": { "tc": 16, "actif": 3, "scolaire": 3, "auto": 77, "autre": 1 }
+  },
+  "faits_saillants_2023": {
+    "deplacements_24h_territoire_enquete": 8903000,
+    "variation_deplacements_24h_vs_2018_pct": -4,
+    "variation_deplacements_pointe_matin_vs_2018_pct": -9,
+    "parc_automobile_enquete_2023": 2559000,
+    "parc_automobile_saaq_2022_par_menage": 1.23,
+    "parc_automobile_croissance_saaq_2017_2022_pct": 4,
+    "teletravail_temps_plein_pct": 26,
+    "population_territoire_artm_2023": 4113000,
+    "population_croissance_2018_2023_pct": 4
+  }
+}
