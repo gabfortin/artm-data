@@ -185,8 +185,48 @@ async function initPartsModales(d) {
   }
 }
 
-async function initVeloSecteurs() {
-  const d = await fetchJSON("data/velo_secteurs.json");
+// Arrondissements centraux cités dans la lecture du graphique — c'est là que
+// la progression du vélo est la plus forte depuis 2018.
+const BOROUGHS_CENTRAUX = [
+  "Le Plateau-Mont-Royal",
+  "Rosemont–La Petite-Patrie",
+  "Villeray–Saint-Michel–Parc-Extension",
+  "Ville-Marie",
+];
+
+function computeVeloCentralAggregate(d) {
+  const byName = new Map(d.arrondissements.map((r) => [r.arrondissement, r]));
+  let velo18 = 0, tot18 = 0, velo23 = 0, tot23 = 0;
+  for (const name of BOROUGHS_CENTRAUX) {
+    const r = byName.get(name);
+    if (!r || r.deplacements_total_2018 == null || r.deplacements_total_2023 == null) continue;
+    velo18 += (r.part_velo_2018_pct / 100) * r.deplacements_total_2018;
+    tot18 += r.deplacements_total_2018;
+    velo23 += (r.part_velo_2023_pct / 100) * r.deplacements_total_2023;
+    tot23 += r.deplacements_total_2023;
+  }
+  const p18 = (100 * velo18) / tot18;
+  const p23 = (100 * velo23) / tot23;
+  return { p18, p23, ptsDelta: p23 - p18, relGrowthPct: (100 * (p23 - p18)) / p18 };
+}
+
+async function initVeloSecteurs(d) {
+  const agg = computeVeloCentralAggregate(d);
+  const stat = document.getElementById("stat-velo-centraux");
+  stat.innerHTML = "";
+  stat.appendChild(el("div", { class: "stat" }, [
+    el("div", { class: "stat-value" }, `+${agg.relGrowthPct.toFixed(0)} %`),
+    el("div", { class: "stat-label" }, "croissance relative de la part vélo, 4 arrondissements centraux, 2018→2023"),
+  ]));
+  stat.appendChild(el("div", { class: "stat" }, [
+    el("div", { class: "stat-value" }, `${agg.p18.toFixed(2)} % → ${agg.p23.toFixed(2)} %`),
+    el("div", { class: "stat-label" }, "part vélo agrégée (pondérée par les déplacements), Plateau + Rosemont–La Petite-Patrie + Villeray–Saint-Michel–Parc-Extension + Ville-Marie"),
+  ]));
+  stat.appendChild(el("div", { class: "stat" }, [
+    el("div", { class: "stat-value" }, `+${agg.ptsDelta.toFixed(2)} pts`),
+    el("div", { class: "stat-label" }, "points de pourcentage gagnés sur la même base"),
+  ]));
+
   const rows = [...d.arrondissements].sort(
     (a, b) => (b.part_velo_2023_pct ?? -1) - (a.part_velo_2023_pct ?? -1)
   );
@@ -732,7 +772,7 @@ function renderSources(meta) {
   document.getElementById("meta-updated-at").textContent = new Date(meta.updated_at).toLocaleString("fr-CA");
 }
 
-function renderHeroKPIs(achalandageSummary, mesuresBusTotal, revTotal) {
+function renderHeroKPIs(achalandageSummary, mesuresBusTotal, revTotal, veloCentralAgg) {
   const grid = document.getElementById("kpi-grid");
   grid.innerHTML = "";
   const { regionalMonths, regionalValues, regional } = achalandageSummary;
@@ -760,6 +800,10 @@ function renderHeroKPIs(achalandageSummary, mesuresBusTotal, revTotal) {
     {
       value: `${fmtDec1.format(revTotal)} / 184 km`,
       label: "Réseau express vélo réalisé (Montréal)",
+    },
+    {
+      value: `+${veloCentralAgg.relGrowthPct.toFixed(0)} %`,
+      label: "part vélo, 4 arrondissements centraux de Montréal, 2018→2023 (Plateau, Rosemont–La Petite-Patrie, Villeray–Saint-Michel–Parc-Extension, Ville-Marie)",
     },
   ];
 
@@ -848,19 +892,21 @@ async function boot() {
   const meta = await fetchJSON("data/meta.json");
   renderSources(meta);
 
-  const [partsModales, achalandage] = await Promise.all([
+  const [partsModales, achalandage, veloSecteurs] = await Promise.all([
     fetchJSON("data/parts_modales.json"),
     fetchJSON("data/achalandage.json"),
+    fetchJSON("data/velo_secteurs.json"),
   ]);
 
   await initPartsModales(partsModales);
-  await initVeloSecteurs();
+  await initVeloSecteurs(veloSecteurs);
   const achalandageSummary = await initAchalandage(achalandage, meta);
   await initTarifs(meta);
   renderParcAuto(partsModales, achalandageSummary);
 
   const [mesuresBus, rev] = await Promise.all([fetchJSON("data/mesures_bus.json"), fetchJSON("data/rev.json")]);
-  renderHeroKPIs(achalandageSummary, mesuresBus.total_km, rev.total_km_realise);
+  const veloCentralAgg = computeVeloCentralAggregate(veloSecteurs);
+  renderHeroKPIs(achalandageSummary, mesuresBus.total_km, rev.total_km_realise, veloCentralAgg);
 
   await initInfrastructure(meta, mesuresBus, rev);
   initMap();
