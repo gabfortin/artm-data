@@ -67,6 +67,8 @@
         <div class="chart-box h-320"><canvas id="chart-parts-modales"></canvas></div>
         <button class="table-toggle" data-table-target="table-parts-modales">Voir les données en tableau</button>
         <div class="data-table-wrap" id="table-parts-modales"></div>
+        <h3 style="margin-top:18px; font-size:14px">Évolution 2003 → 2023 (points de %)</h3>
+        <div class="stat-strip" id="stat-parts-modales-delta"></div>
       </div>
 
       <div class="grid-2" style="margin-top:18px">
@@ -86,6 +88,7 @@
         <p class="chart-caption">Part des déplacements (24 h, tous motifs) faits exclusivement à vélo (incluant vélo électrique et BIXI), selon l'arrondissement de résidence. Les deux enquêtes utilisent le même découpage de secteurs, donc directement comparables.</p>
         <div class="stat-strip" id="stat-velo-highlights" style="margin-bottom:16px"></div>
         <div class="stat-strip" id="stat-velo-centraux" style="margin-bottom:16px"></div>
+        <label class="central-toggle"><input type="checkbox" id="toggle-central-velo"> Afficher seulement les arrondissements centraux (Plateau, Rosemont–La Petite-Patrie, Villeray–Saint-Michel–Parc-Extension, Ville-Marie)</label>
         <div class="chart-box" id="chart-velo-secteurs-box" style="height:560px"><canvas id="chart-velo-secteurs"></canvas></div>
         <button class="table-toggle" data-table-target="table-velo-secteurs">Voir les données en tableau</button>
         <div class="data-table-wrap" id="table-velo-secteurs"></div>
@@ -108,6 +111,8 @@
         <h3>Transport collectif par arrondissement, 2018 vs 2023</h3>
         <p class="chart-caption">Transport en commun seul + TC et autre mode combiné — même regroupement que celui utilisé par l'ARTM dans ses propres tableaux de parts modales.</p>
         <div class="stat-strip" id="stat-tc-top" style="margin-bottom:16px"></div>
+        <div class="stat-strip" id="stat-tc-centraux" style="margin-bottom:16px"></div>
+        <label class="central-toggle"><input type="checkbox" id="toggle-central-tc"> Afficher seulement les arrondissements centraux</label>
         <div class="chart-box" style="height:560px"><canvas id="chart-tc-secteurs"></canvas></div>
         <button class="table-toggle" data-table-target="table-tc-secteurs">Voir les données en tableau</button>
         <div class="data-table-wrap" id="table-tc-secteurs"></div>
@@ -124,6 +129,8 @@
         <h3>Auto par arrondissement, 2018 vs 2023</h3>
         <p class="chart-caption">Auto-conducteur et auto-passager combinés.</p>
         <div class="stat-strip" id="stat-auto-top" style="margin-bottom:16px"></div>
+        <div class="stat-strip" id="stat-auto-centraux" style="margin-bottom:16px"></div>
+        <label class="central-toggle"><input type="checkbox" id="toggle-central-auto"> Afficher seulement les arrondissements centraux</label>
         <div class="chart-box" style="height:560px"><canvas id="chart-auto-secteurs"></canvas></div>
         <button class="table-toggle" data-table-target="table-auto-secteurs">Voir les données en tableau</button>
         <div class="data-table-wrap" id="table-auto-secteurs"></div>
@@ -133,6 +140,8 @@
         <h3>Marche par arrondissement, 2018 vs 2023</h3>
         <p class="chart-caption">Déplacements faits exclusivement à pied.</p>
         <div class="stat-strip" id="stat-marche-top" style="margin-bottom:16px"></div>
+        <div class="stat-strip" id="stat-marche-centraux" style="margin-bottom:16px"></div>
+        <label class="central-toggle"><input type="checkbox" id="toggle-central-marche"> Afficher seulement les arrondissements centraux</label>
         <div class="chart-box" style="height:560px"><canvas id="chart-marche-secteurs"></canvas></div>
         <button class="table-toggle" data-table-target="table-marche-secteurs">Voir les données en tableau</button>
         <div class="data-table-wrap" id="table-marche-secteurs"></div>
@@ -142,6 +151,8 @@
         <h3>Transport actif (vélo + marche) par arrondissement, 2018 vs 2023</h3>
         <p class="chart-caption">Vélo et marche combinés — la somme des deux graphiques ci-dessus.</p>
         <div class="stat-strip" id="stat-actif-top" style="margin-bottom:16px"></div>
+        <div class="stat-strip" id="stat-actif-centraux" style="margin-bottom:16px"></div>
+        <label class="central-toggle"><input type="checkbox" id="toggle-central-actif"> Afficher seulement les arrondissements centraux</label>
         <div class="chart-box" style="height:560px"><canvas id="chart-actif-secteurs"></canvas></div>
         <button class="table-toggle" data-table-target="table-actif-secteurs">Voir les données en tableau</button>
         <div class="data-table-wrap" id="table-actif-secteurs"></div>

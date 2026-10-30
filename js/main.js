@@ -152,6 +152,24 @@ async function initPartsModales(d) {
   ]);
   renderTable("table-parts-modales", headers, tableRows);
 
+  const deltaStrip = document.getElementById("stat-parts-modales-delta");
+  deltaStrip.innerHTML = "";
+  const firstYear = labels[0], lastYear = labels[labels.length - 1];
+  const modeDeltas = [
+    ["Auto", series.auto, "--series-auto"],
+    ["Transport collectif", series.tc, "--series-tc"],
+    ["Actif (marche, vélo)", series.actif, "--series-actif"],
+    ["Scolaire", series.scolaire, "--series-scolaire"],
+    ["Autre", series.autre, "--series-autre"],
+  ];
+  for (const [label, arr, colorVar] of modeDeltas) {
+    const delta = arr[arr.length - 1] - arr[0];
+    deltaStrip.appendChild(el("div", { class: "stat", style: `border-left-color:${cssVar(colorVar)}` }, [
+      el("div", { class: "stat-value" }, `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts`),
+      el("div", { class: "stat-label" }, `${label} (${firstYear} → ${lastYear})`),
+    ]));
+  }
+
   // Trips vs distance (2023, 24h)
   const dTrips = d.parts_24h_par_nombre_deplacements["2023"];
   const dDist = d.parts_24h_par_distance_parcourue["2023"];
@@ -204,20 +222,46 @@ const BOROUGHS_CENTRAUX = [
   "Ville-Marie",
 ];
 
-function computeVeloCentralAggregate(d) {
-  const byName = new Map(d.arrondissements.map((r) => [r.arrondissement, r]));
-  let velo18 = 0, tot18 = 0, velo23 = 0, tot23 = 0;
+// Moyenne pondérée (par le volume réel de déplacements de chaque
+// arrondissement, pas une simple moyenne des %) pour le sous-ensemble des
+// arrondissements centraux — plus juste qu'une moyenne simple puisque les
+// arrondissements n'ont pas tous le même poids démographique.
+function computeCentralAggregate(rows, key18, key23) {
+  const byName = new Map(rows.map((r) => [r.arrondissement, r]));
+  let num18 = 0, tot18 = 0, num23 = 0, tot23 = 0;
   for (const name of BOROUGHS_CENTRAUX) {
     const r = byName.get(name);
     if (!r || r.deplacements_total_2018 == null || r.deplacements_total_2023 == null) continue;
-    velo18 += (r.part_velo_2018_pct / 100) * r.deplacements_total_2018;
+    num18 += (r[key18] / 100) * r.deplacements_total_2018;
     tot18 += r.deplacements_total_2018;
-    velo23 += (r.part_velo_2023_pct / 100) * r.deplacements_total_2023;
+    num23 += (r[key23] / 100) * r.deplacements_total_2023;
     tot23 += r.deplacements_total_2023;
   }
-  const p18 = (100 * velo18) / tot18;
-  const p23 = (100 * velo23) / tot23;
+  const p18 = (100 * num18) / tot18;
+  const p23 = (100 * num23) / tot23;
   return { p18, p23, ptsDelta: p23 - p18, relGrowthPct: (100 * (p23 - p18)) / p18 };
+}
+
+function computeVeloCentralAggregate(d) {
+  return computeCentralAggregate(d.arrondissements, "part_velo_2018_pct", "part_velo_2023_pct");
+}
+
+function renderCentralAggregateStat(containerId, agg, modeLabel) {
+  const stat = document.getElementById(containerId);
+  if (!stat) return;
+  stat.innerHTML = "";
+  stat.appendChild(el("div", { class: "stat" }, [
+    el("div", { class: "stat-value" }, `${agg.p18.toFixed(2)} % → ${agg.p23.toFixed(2)} %`),
+    el("div", { class: "stat-label" }, `Moyenne pondérée, arrondissements centraux (Plateau, Rosemont–La Petite-Patrie, Villeray–Saint-Michel–Parc-Extension, Ville-Marie) — ${modeLabel}, 2018→2023`),
+  ]));
+  stat.appendChild(el("div", { class: "stat" }, [
+    el("div", { class: "stat-value" }, `${agg.ptsDelta >= 0 ? "+" : ""}${agg.ptsDelta.toFixed(2)} pts`),
+    el("div", { class: "stat-label" }, "points de pourcentage gagnés sur cette base"),
+  ]));
+  stat.appendChild(el("div", { class: "stat" }, [
+    el("div", { class: "stat-value" }, `${agg.relGrowthPct >= 0 ? "+" : ""}${agg.relGrowthPct.toFixed(0)} %`),
+    el("div", { class: "stat-label" }, "croissance relative"),
+  ]));
 }
 
 async function initVeloSecteurs(d) {
@@ -258,14 +302,15 @@ async function initVeloSecteurs(d) {
     el("div", { class: "stat-label" }, "points de pourcentage gagnés sur la même base"),
   ]));
 
-  const rows = [...d.arrondissements].sort(
-    (a, b) => (b.part_velo_2023_pct ?? -1) - (a.part_velo_2023_pct ?? -1)
-  );
-  const labels = rows.map((r) => r.arrondissement);
-
   const ctx = document.getElementById("chart-velo-secteurs");
   let chart;
-  const build = () => {
+  let lastRows = d.arrondissements;
+
+  const renderRows = (rowsIn) => {
+    lastRows = rowsIn;
+    const rows = [...rowsIn].sort((a, b) => (b.part_velo_2023_pct ?? -1) - (a.part_velo_2023_pct ?? -1));
+    const labels = rows.map((r) => r.arrondissement);
+
     if (chart) chart.destroy();
     chart = new Chart(ctx, {
       type: "bar",
@@ -278,22 +323,27 @@ async function initVeloSecteurs(d) {
       },
       options: baseBarOptions({ yTitle: "% des déplacements faits à vélo (24 h)", indexAxis: "y", tooltipSuffix: " %", tooltipDecimals: 2 }),
     });
-  };
-  build();
-  registerRedraw(build);
 
-  renderTable(
-    "table-velo-secteurs",
-    ["Arrondissement", "Part vélo 2018", "Part vélo 2023", "Variation (pts)"],
-    rows.map((r) => [
-      r.arrondissement,
-      r.part_velo_2018_pct != null ? `${r.part_velo_2018_pct.toFixed(2)} %` : "—",
-      r.part_velo_2023_pct != null ? `${r.part_velo_2023_pct.toFixed(2)} %` : "—",
-      r.part_velo_2018_pct != null && r.part_velo_2023_pct != null
-        ? `${(r.part_velo_2023_pct - r.part_velo_2018_pct >= 0 ? "+" : "")}${(r.part_velo_2023_pct - r.part_velo_2018_pct).toFixed(2)}`
-        : "—",
-    ])
-  );
+    renderTable(
+      "table-velo-secteurs",
+      ["Arrondissement", "Part vélo 2018", "Part vélo 2023", "Variation (pts)"],
+      rows.map((r) => [
+        r.arrondissement,
+        r.part_velo_2018_pct != null ? `${r.part_velo_2018_pct.toFixed(2)} %` : "—",
+        r.part_velo_2023_pct != null ? `${r.part_velo_2023_pct.toFixed(2)} %` : "—",
+        r.part_velo_2018_pct != null && r.part_velo_2023_pct != null
+          ? `${(r.part_velo_2023_pct - r.part_velo_2018_pct >= 0 ? "+" : "")}${(r.part_velo_2023_pct - r.part_velo_2018_pct).toFixed(2)}`
+          : "—",
+      ])
+    );
+  };
+
+  renderRows(d.arrondissements);
+  registerRedraw(() => renderRows(lastRows));
+
+  document.getElementById("toggle-central-velo").addEventListener("change", (e) => {
+    renderRows(e.target.checked ? d.arrondissements.filter((r) => BOROUGHS_CENTRAUX.includes(r.arrondissement)) : d.arrondissements);
+  });
 }
 
 // Rendu générique pour les cartes "part modale par arrondissement" (TC, auto,
@@ -312,14 +362,18 @@ function initModeSecteurs(key, block, { colorVar, unitLabel }) {
     ]));
   }
 
-  const rows = [...block.arrondissements].sort(
-    (a, b) => (b.part_2023_pct ?? -1) - (a.part_2023_pct ?? -1)
-  );
-  const labels = rows.map((r) => r.arrondissement);
+  const centralAgg = computeCentralAggregate(block.arrondissements, "part_2018_pct", "part_2023_pct");
+  renderCentralAggregateStat(`stat-${key}-centraux`, centralAgg, unitLabel);
 
   const ctx = document.getElementById(`chart-${key}-secteurs`);
   let chart;
-  const build = () => {
+  let lastRows = block.arrondissements;
+
+  const renderRows = (rowsIn) => {
+    lastRows = rowsIn;
+    const rows = [...rowsIn].sort((a, b) => (b.part_2023_pct ?? -1) - (a.part_2023_pct ?? -1));
+    const labels = rows.map((r) => r.arrondissement);
+
     if (chart) chart.destroy();
     chart = new Chart(ctx, {
       type: "bar",
@@ -332,22 +386,27 @@ function initModeSecteurs(key, block, { colorVar, unitLabel }) {
       },
       options: baseBarOptions({ yTitle: `% des déplacements — ${unitLabel} (24 h)`, indexAxis: "y", tooltipSuffix: " %", tooltipDecimals: 2 }),
     });
-  };
-  build();
-  registerRedraw(build);
 
-  renderTable(
-    `table-${key}-secteurs`,
-    ["Arrondissement", "Part 2018", "Part 2023", "Variation (pts)"],
-    rows.map((r) => [
-      r.arrondissement,
-      r.part_2018_pct != null ? `${r.part_2018_pct.toFixed(2)} %` : "—",
-      r.part_2023_pct != null ? `${r.part_2023_pct.toFixed(2)} %` : "—",
-      r.part_2018_pct != null && r.part_2023_pct != null
-        ? `${(r.part_2023_pct - r.part_2018_pct >= 0 ? "+" : "")}${(r.part_2023_pct - r.part_2018_pct).toFixed(2)}`
-        : "—",
-    ])
-  );
+    renderTable(
+      `table-${key}-secteurs`,
+      ["Arrondissement", "Part 2018", "Part 2023", "Variation (pts)"],
+      rows.map((r) => [
+        r.arrondissement,
+        r.part_2018_pct != null ? `${r.part_2018_pct.toFixed(2)} %` : "—",
+        r.part_2023_pct != null ? `${r.part_2023_pct.toFixed(2)} %` : "—",
+        r.part_2018_pct != null && r.part_2023_pct != null
+          ? `${(r.part_2023_pct - r.part_2018_pct >= 0 ? "+" : "")}${(r.part_2023_pct - r.part_2018_pct).toFixed(2)}`
+          : "—",
+      ])
+    );
+  };
+
+  renderRows(block.arrondissements);
+  registerRedraw(() => renderRows(lastRows));
+
+  document.getElementById(`toggle-central-${key}`).addEventListener("change", (e) => {
+    renderRows(e.target.checked ? block.arrondissements.filter((r) => BOROUGHS_CENTRAUX.includes(r.arrondissement)) : block.arrondissements);
+  });
 }
 
 /* ===========================================================================
