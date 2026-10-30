@@ -185,6 +185,46 @@ async function initPartsModales(d) {
   }
 }
 
+async function initVeloSecteurs() {
+  const d = await fetchJSON("data/velo_secteurs.json");
+  const rows = [...d.arrondissements].sort(
+    (a, b) => (b.part_velo_2023_pct ?? -1) - (a.part_velo_2023_pct ?? -1)
+  );
+  const labels = rows.map((r) => r.arrondissement);
+
+  const ctx = document.getElementById("chart-velo-secteurs");
+  let chart;
+  const build = () => {
+    if (chart) chart.destroy();
+    chart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          { label: "2018", data: rows.map((r) => r.part_velo_2018_pct), backgroundColor: cssVar("--series-autre") },
+          { label: "2023", data: rows.map((r) => r.part_velo_2023_pct), backgroundColor: cssVar("--series-actif") },
+        ],
+      },
+      options: baseBarOptions({ yTitle: "% des déplacements faits à vélo (24 h)", indexAxis: "y", tooltipSuffix: " %", tooltipDecimals: 2 }),
+    });
+  };
+  build();
+  registerRedraw(build);
+
+  renderTable(
+    "table-velo-secteurs",
+    ["Arrondissement", "Part vélo 2018", "Part vélo 2023", "Variation (pts)"],
+    rows.map((r) => [
+      r.arrondissement,
+      r.part_velo_2018_pct != null ? `${r.part_velo_2018_pct.toFixed(2)} %` : "—",
+      r.part_velo_2023_pct != null ? `${r.part_velo_2023_pct.toFixed(2)} %` : "—",
+      r.part_velo_2018_pct != null && r.part_velo_2023_pct != null
+        ? `${(r.part_velo_2023_pct - r.part_velo_2018_pct >= 0 ? "+" : "")}${(r.part_velo_2023_pct - r.part_velo_2018_pct).toFixed(2)}`
+        : "—",
+    ])
+  );
+}
+
 /* ===========================================================================
    2) Achalandage (achalandage.json)
    =========================================================================== */
@@ -532,12 +572,10 @@ async function initInfrastructure(meta, mesuresBus, rev) {
 
 async function initMap() {
   const map = L.map("map", { scrollWheelZoom: false }).setView([45.55, -73.65], 10);
-  const tiles = (document.documentElement.getAttribute("data-theme") === "dark" ||
-    (!document.documentElement.getAttribute("data-theme") && window.matchMedia("(prefers-color-scheme: dark)").matches))
-    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-  L.tileLayer(tiles, {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  // Tuiles OpenStreetMap standard — aucune clé requise, contrairement aux
+  // tuiles CARTO (basemaps.cartocdn.com) qui exigent désormais un compte.
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 19,
   }).addTo(map);
 
@@ -816,6 +854,7 @@ async function boot() {
   ]);
 
   await initPartsModales(partsModales);
+  await initVeloSecteurs();
   const achalandageSummary = await initAchalandage(achalandage, meta);
   await initTarifs(meta);
   renderParcAuto(partsModales, achalandageSummary);

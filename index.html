@@ -80,6 +80,22 @@
           <div class="stat-strip" id="faits-saillants-2023"></div>
         </div>
       </div>
+
+      <div class="card" style="margin-top:18px">
+        <h3>Le vélo n'a pas progressé partout pareil : part modale par arrondissement, 2018 vs 2023</h3>
+        <p class="chart-caption">Part des déplacements (24 h, tous motifs) faits exclusivement à vélo (incluant vélo électrique et BIXI), selon l'arrondissement de résidence. Les deux enquêtes utilisent le même découpage de secteurs, donc directement comparables.</p>
+        <div class="chart-box" id="chart-velo-secteurs-box" style="height:560px"><canvas id="chart-velo-secteurs"></canvas></div>
+        <button class="table-toggle" data-table-target="table-velo-secteurs">Voir les données en tableau</button>
+        <div class="data-table-wrap" id="table-velo-secteurs"></div>
+        <p class="callout" style="margin-top:14px">
+          <strong>Lecture :</strong> les arrondissements centraux (Plateau-Mont-Royal, Rosemont–La Petite-Patrie,
+          Villeray–Saint-Michel–Parc-Extension, Ville-Marie) ont vu leur part vélo croître fortement et sont déjà
+          loin devant — le Plateau est passé d'environ 9 % à près de 15 % des déplacements. Les arrondissements
+          de l'est et de l'ouest de l'île (Rivière-des-Prairies–Pointe-aux-Trembles, Pierrefonds-Roxboro,
+          Saint-Léonard) restent sous 2 %, malgré une croissance relative comparable. Source : matrices de
+          déplacements ARTM 2018/2023 — calcul détaillé dans <code class="inline">scripts/analyze_velo_secteurs.py</code>.
+        </p>
+      </div>
     </div>
   </section>
 
@@ -235,6 +251,10 @@
             <span class="src-name">Parts modales (enquêtes OD / Perspectives mobilité)</span>
             <span class="src-meta">Publiées par l'ARTM tous les ~5 ans — mis à jour à la prochaine édition, pas chaque semaine</span>
           </div>
+          <div class="src-item">
+            <span class="src-name">Part du vélo par arrondissement (matrices de déplacements 2018 et 2023)</span>
+            <span class="src-meta">Calculé depuis les fichiers matrices OD de l'ARTM (<code class="inline">scripts/analyze_velo_secteurs.py</code>) — mis à jour à la prochaine édition de l'enquête</span>
+          </div>
         </div>
       </div>
 
@@ -271,7 +291,7 @@
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js" integrity="sha512-c7v2mEghMrX9YKC1iSb93skFX4CVpTvFJxTiEek0DDQZc2zq/WsnlmeBARTTBr/M3Pzd9RwLZ/6ePHPFRYPldA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" integrity="sha512-k72Y+sws0148dhTBT8Nyro04RwjANbBxNCZ80xKT3FdHNON55/us15Ju0YQ2dD0uzyBJ5YjXnbUcLWaCaw3rCg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

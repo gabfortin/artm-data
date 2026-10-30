@@ -1,0 +1,141 @@
+{
+ "description": "Part modale du vélo (mode exclusif, incluant vélo électrique et BIXI) parmi tous les déplacements (24h, tous motifs) des résident·e·s de chaque arrondissement de Montréal, calculée à partir des matrices de déplacements par secteur de pondération (origine) de l'ARTM. 2018 et 2023 utilisent le même découpage de secteurs (SP23), ce qui rend la comparaison directement comparable d'une édition à l'autre.",
+ "source_2023": "https://donnees.artm.quebec/catalogue/dataset/enquete-metropolitaine-2023-perspectives-mobilite",
+ "source_2018": "https://donnees.artm.quebec/catalogue/dataset/enquete-origine-destination-2018",
+ "methode": "Pour chaque arrondissement, somme pondérée (champ 'pond') des déplacements en mode Vélo exclusif (incluant vélo électrique et BIXI) ayant leur origine dans un des secteurs de l'arrondissement, divisée par la somme des déplacements tous modes ayant la même origine, toutes destinations confondues. Quelques secteurs chevauchent deux arrondissements (ex. 1098 Sud-Ouest/Ville-Marie) ; ils sont assignés une seule fois, à l'arrondissement principal cité dans leur description — voir SECTOR_TO_BOROUGH dans scripts/analyze_velo_secteurs.py.",
+ "arrondissements": [
+  {
+   "arrondissement": "Ahuntsic-Cartierville",
+   "part_velo_2018_pct": 2.2,
+   "part_velo_2023_pct": 4.8,
+   "deplacements_total_2023": 1122116,
+   "deplacements_total_2018": 1187957
+  },
+  {
+   "arrondissement": "Anjou",
+   "part_velo_2018_pct": 0.55,
+   "part_velo_2023_pct": 1.72,
+   "deplacements_total_2023": 414966,
+   "deplacements_total_2018": 492252
+  },
+  {
+   "arrondissement": "Côte-des-Neiges–Notre-Dame-de-Grâce",
+   "part_velo_2018_pct": 1.82,
+   "part_velo_2023_pct": 3.51,
+   "deplacements_total_2023": 1221240,
+   "deplacements_total_2018": 1371623
+  },
+  {
+   "arrondissement": "L'Île-Bizard–Sainte-Geneviève",
+   "part_velo_2018_pct": 0.53,
+   "part_velo_2023_pct": 2.24,
+   "deplacements_total_2023": 73542,
+   "deplacements_total_2018": 78697
+  },
+  {
+   "arrondissement": "LaSalle",
+   "part_velo_2018_pct": 0.93,
+   "part_velo_2023_pct": 1.91,
+   "deplacements_total_2023": 549138,
+   "deplacements_total_2018": 591477
+  },
+  {
+   "arrondissement": "Lachine",
+   "part_velo_2018_pct": 1.14,
+   "part_velo_2023_pct": 2.57,
+   "deplacements_total_2023": 400637,
+   "deplacements_total_2018": 422155
+  },
+  {
+   "arrondissement": "Le Plateau-Mont-Royal",
+   "part_velo_2018_pct": 9.02,
+   "part_velo_2023_pct": 14.78,
+   "deplacements_total_2023": 866304,
+   "deplacements_total_2018": 890096
+  },
+  {
+   "arrondissement": "Le Sud-Ouest",
+   "part_velo_2018_pct": 3.78,
+   "part_velo_2023_pct": 5.69,
+   "deplacements_total_2023": 538789,
+   "deplacements_total_2018": 572799
+  },
+  {
+   "arrondissement": "Mercier–Hochelaga-Maisonneuve",
+   "part_velo_2018_pct": 3.31,
+   "part_velo_2023_pct": 6.13,
+   "deplacements_total_2023": 930118,
+   "deplacements_total_2018": 1001535
+  },
+  {
+   "arrondissement": "Montréal-Nord",
+   "part_velo_2018_pct": 0.44,
+   "part_velo_2023_pct": 1.56,
+   "deplacements_total_2023": 484969,
+   "deplacements_total_2018": 572670
+  },
+  {
+   "arrondissement": "Outremont",
+   "part_velo_2018_pct": 4.07,
+   "part_velo_2023_pct": 5.64,
+   "deplacements_total_2023": 255421,
+   "deplacements_total_2018": 245021
+  },
+  {
+   "arrondissement": "Pierrefonds-Roxboro",
+   "part_velo_2018_pct": 0.35,
+   "part_velo_2023_pct": 1.41,
+   "deplacements_total_2023": 431797,
+   "deplacements_total_2018": 450451
+  },
+  {
+   "arrondissement": "Rivière-des-Prairies–Pointe-aux-Trembles",
+   "part_velo_2018_pct": 0.35,
+   "part_velo_2023_pct": 1.11,
+   "deplacements_total_2023": 704917,
+   "deplacements_total_2018": 754249
+  },
+  {
+   "arrondissement": "Rosemont–La Petite-Patrie",
+   "part_velo_2018_pct": 5.0,
+   "part_velo_2023_pct": 10.7,
+   "deplacements_total_2023": 1197892,
+   "deplacements_total_2018": 1261850
+  },
+  {
+   "arrondissement": "Saint-Laurent",
+   "part_velo_2018_pct": 1.07,
+   "part_velo_2023_pct": 1.7,
+   "deplacements_total_2023": 949351,
+   "deplacements_total_2018": 1062847
+  },
+  {
+   "arrondissement": "Saint-Léonard",
+   "part_velo_2018_pct": 0.34,
+   "part_velo_2023_pct": 1.16,
+   "deplacements_total_2023": 509759,
+   "deplacements_total_2018": 571795
+  },
+  {
+   "arrondissement": "Verdun",
+   "part_velo_2018_pct": 1.89,
+   "part_velo_2023_pct": 4.91,
+   "deplacements_total_2023": 468218,
+   "deplacements_total_2018": 477603
+  },
+  {
+   "arrondissement": "Ville-Marie",
+   "part_velo_2018_pct": 2.97,
+   "part_velo_2023_pct": 6.41,
+   "deplacements_total_2023": 2294493,
+   "deplacements_total_2018": 2860028
+  },
+  {
+   "arrondissement": "Villeray–Saint-Michel–Parc-Extension",
+   "part_velo_2018_pct": 3.82,
+   "part_velo_2023_pct": 7.47,
+   "deplacements_total_2023": 954247,
+   "deplacements_total_2018": 988060
+  }
+ ]
+}

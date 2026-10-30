@@ -50,6 +50,16 @@ git add data/ && git commit -m "data: mise à jour manuelle" && git push
   mobilité de l'ARTM, publiées tous les ~5 ans seulement. Ce fichier n'est
   pas touché par le robot — il se met à jour "à la main" lorsque l'ARTM publie
   une nouvelle édition de l'enquête (prochaine attendue vers 2028).
+- **Sourcé manuellement** (`data/velo_secteurs.json`) : part modale du vélo
+  par arrondissement de Montréal, 2018 vs 2023, calculée directement à partir
+  des matrices de déplacements (fichiers OD, ~13 Mo chacun) avec
+  `scripts/analyze_velo_secteurs.py`. Nécessite `openpyxl` (`pip install
+  openpyxl`) — volontairement **pas** dans le pipeline hebdomadaire stdlib-only.
+  À relancer à la main à la prochaine édition de l'enquête :
+  ```bash
+  pip install openpyxl
+  python3 scripts/analyze_velo_secteurs.py
+  ```
 - **En direct, côté navigateur** : le flux [GBFS public de BIXI](https://gbfs.velobixi.com/gbfs/gbfs.json)
   est lu directement par le navigateur de chaque visiteur (pas de donnée
   stockée côté site).
