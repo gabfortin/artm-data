@@ -212,6 +212,27 @@ function computeVeloCentralAggregate(d) {
 
 async function initVeloSecteurs(d) {
   const agg = computeVeloCentralAggregate(d);
+
+  const byName = new Map(d.arrondissements.map((r) => [r.arrondissement, r]));
+  const plateau = byName.get("Le Plateau-Mont-Royal");
+  const top23 = d.secteur_max_velo && d.secteur_max_velo["2023"];
+
+  const highlights = document.getElementById("stat-velo-highlights");
+  highlights.innerHTML = "";
+  if (plateau && plateau.part_velo_2023_pct != null) {
+    highlights.appendChild(el("div", { class: "stat" }, [
+      el("div", { class: "stat-value" }, `${plateau.part_velo_2023_pct.toFixed(2)}\u00a0%`),
+      el("div", { class: "stat-label" }, `Le Plateau-Mont-Royal, 2023 \u2014 la part v\u00e9lo y a presque doubl\u00e9 depuis 2018 (${plateau.part_velo_2018_pct.toFixed(2)}\u00a0%), pour approcher 15\u00a0% de tous les d\u00e9placements`),
+    ]));
+  }
+  if (top23) {
+    const shortName = (top23.nom_secteur || "").replace(/^Montr\u00e9al\s*:\s*/, "");
+    highlights.appendChild(el("div", { class: "stat" }, [
+      el("div", { class: "stat-value" }, `${top23.part_velo_pct.toFixed(2)}\u00a0%`),
+      el("div", { class: "stat-label" }, `Secteur avec la part v\u00e9lo la plus \u00e9lev\u00e9e de Montr\u00e9al, 2023 \u2014 ${shortName} (${fmtInt.format(top23.observations_brutes)} observations, seuil de fiabilit\u00e9 ARTM largement d\u00e9pass\u00e9)`),
+    ]));
+  }
+
   const stat = document.getElementById("stat-velo-centraux");
   stat.innerHTML = "";
   stat.appendChild(el("div", { class: "stat" }, [

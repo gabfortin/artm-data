@@ -84,6 +84,7 @@
       <div class="card" style="margin-top:18px">
         <h3>Le vélo n'a pas progressé partout pareil : part modale par arrondissement, 2018 vs 2023</h3>
         <p class="chart-caption">Part des déplacements (24 h, tous motifs) faits exclusivement à vélo (incluant vélo électrique et BIXI), selon l'arrondissement de résidence. Les deux enquêtes utilisent le même découpage de secteurs, donc directement comparables.</p>
+        <div class="stat-strip" id="stat-velo-highlights" style="margin-bottom:16px"></div>
         <div class="stat-strip" id="stat-velo-centraux" style="margin-bottom:16px"></div>
         <div class="chart-box" id="chart-velo-secteurs-box" style="height:560px"><canvas id="chart-velo-secteurs"></canvas></div>
         <button class="table-toggle" data-table-target="table-velo-secteurs">Voir les données en tableau</button>
@@ -91,7 +92,9 @@
         <p class="callout" style="margin-top:14px">
           <strong>Lecture :</strong> les arrondissements centraux (Plateau-Mont-Royal, Rosemont–La Petite-Patrie,
           Villeray–Saint-Michel–Parc-Extension, Ville-Marie) ont vu leur part vélo croître fortement et sont déjà
-          loin devant — le Plateau est passé de 9,02 % à 14,78 % des déplacements. Les arrondissements
+          loin devant — le Plateau est passé de 9,02 % à 14,78 % des déplacements, soit près de 15 %.
+          À l'intérieur même du Plateau, le secteur De Lorimier atteint 17,06 % en 2023 (contre 9,38 % en
+          2018), le taux le plus élevé de tous les secteurs de Montréal. Les arrondissements
           de l'est et de l'ouest de l'île (Rivière-des-Prairies–Pointe-aux-Trembles, Pierrefonds-Roxboro,
           Saint-Léonard) restent sous 2 %, malgré une croissance relative comparable. Source : matrices de
           déplacements ARTM 2018/2023 — calcul détaillé dans <code class="inline">scripts/analyze_velo_secteurs.py</code>.

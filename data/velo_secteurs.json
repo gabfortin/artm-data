@@ -137,5 +137,24 @@
    "deplacements_total_2023": 954247,
    "deplacements_total_2018": 988060
   }
- ]
+ ],
+ "secteur_max_velo": {
+  "description": "Secteur de pondération (intra-arrondissement, échelle plus fine que l'arrondissement) avec la part vélo la plus élevée, parmi les secteurs ayant au moins 30 observations brutes dans l'enquête (seuil de fiabilité utilisé par l'ARTM elle-même).",
+  "2023": {
+   "code_secteur": "2045",
+   "nom_secteur": "Montréal : Le Plateau-Mont-Royal (De Lorimier)",
+   "arrondissement": "Le Plateau-Mont-Royal",
+   "part_velo_pct": 17.06,
+   "deplacements_total": 239698,
+   "observations_brutes": 13300
+  },
+  "2018": {
+   "code_secteur": "2045",
+   "nom_secteur": "Montréal : Le Plateau-Mont-Royal (De Lorimier)",
+   "arrondissement": "Le Plateau-Mont-Royal",
+   "part_velo_pct": 9.38,
+   "deplacements_total": 251932,
+   "observations_brutes": 9970
+  }
+ }
 }

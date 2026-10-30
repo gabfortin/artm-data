@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Calcule la part modale du vélo par arrondissement de Montréal, 2018 vs 2023,
-à partir des matrices de déplacements (OD) de l'ARTM.
+à partir des matrices de déplacements (OD) de l'ARTM — ainsi que le secteur
+de pondération (intra-arrondissement) affichant la part vélo la plus élevée.
 
 Contrairement à scripts/update_data.py, ce script N'EST PAS exécuté chaque
 semaine : les enquêtes de mobilité ne paraissent que tous les ~5 ans, les
@@ -34,6 +35,14 @@ MODE_VELO = "13"
 MODE_TOUS = "100"
 MOTIF_TOUS = "1"
 PERIODE_24H = "1"
+
+# En dessous de ce nombre d'observations brutes (non pondérées) cumulées sur
+# un secteur, l'ARTM elle-même considère la cellule peu fiable (voir l'onglet
+# "Documentation" des fichiers matrices : "volumes... en rouge... inférieur à
+# 30 observations"). On applique le même seuil pour exclure les secteurs trop
+# petits de la recherche du "secteur avec la plus haute part vélo", pour ne
+# pas remonter un artefact d'échantillonnage.
+MIN_OBS_RELIABLE = 30
 
 # Mapping secteur de pondération (SP23) -> arrondissement officiel de la
 # Ville de Montréal. Construit à la main à partir du dictionnaire des 68
@@ -90,17 +99,36 @@ def download(url, dest):
         f.write(resp.read())
 
 
-def velo_share_by_borough(xlsx_path):
+def read_sector_names(xlsx_path):
+    """Lit l'onglet Dictionnaire pour obtenir {code SP23: nom descriptif du secteur}."""
+    wb = openpyxl.load_workbook(xlsx_path, read_only=True, data_only=True)
+    ws = wb["Dictionnaire"]
+    names = {}
+    started = False
+    for row in ws.iter_rows(values_only=True):
+        if row[1] == "RA 2023":
+            started = True
+            continue
+        if not started:
+            continue
+        if row[3] is None:
+            break
+        names[str(row[3])] = row[4]
+    wb.close()
+    return names
+
+
+def velo_sums_by_sector(xlsx_path):
+    """Retourne (velo_pond, total_pond, velo_obs, total_obs), chacun un dict
+    {code secteur origine: somme}, pour motif=tous les motifs, période=24h."""
     wb = openpyxl.load_workbook(xlsx_path, read_only=True, data_only=True)
     ws = wb["donnees_matrices_plates"]
     rows = ws.iter_rows(values_only=True)
     next(rows)  # header: id, obs, pond
 
-    velo = {}   # borough -> sum pond, mode vélo
-    total = {}  # borough -> sum pond, tous modes
+    velo_pond, total_pond, velo_obs, total_obs = {}, {}, {}, {}
     for r in rows:
-        rid = r[0]
-        pond = r[2]
+        rid, obs, pond = r[0], r[1], r[2]
         if rid is None or pond is None:
             continue
         origine, _destination, mode, motif, periode = rid.split("_")
@@ -108,14 +136,52 @@ def velo_share_by_borough(xlsx_path):
             continue
         if mode not in (MODE_VELO, MODE_TOUS):
             continue
-        borough = SECTOR_TO_BOROUGH.get(origine)
-        if borough is None:
-            continue  # secteur hors Ville de Montréal (Laval, Longueuil, couronnes, enclaves)
-        bucket = velo if mode == MODE_VELO else total
-        bucket[borough] = bucket.get(borough, 0) + pond
+        is_velo = mode == MODE_VELO
+        (velo_pond if is_velo else total_pond)[origine] = (velo_pond if is_velo else total_pond).get(origine, 0) + pond
+        (velo_obs if is_velo else total_obs)[origine] = (velo_obs if is_velo else total_obs).get(origine, 0) + (obs or 0)
 
     wb.close()
+    return velo_pond, total_pond, velo_obs, total_obs
+
+
+def aggregate_to_boroughs(velo_pond, total_pond):
+    velo, total = {}, {}
+    for code, v in velo_pond.items():
+        b = SECTOR_TO_BOROUGH.get(code)
+        if b is None:
+            continue
+        velo[b] = velo.get(b, 0) + v
+    for code, t in total_pond.items():
+        b = SECTOR_TO_BOROUGH.get(code)
+        if b is None:
+            continue
+        total[b] = total.get(b, 0) + t
     return velo, total
+
+
+def top_sector(velo_pond, total_pond, velo_obs, total_obs, sector_names):
+    """Secteur montréalais (SP23) avec la plus haute part vélo, en excluant
+    les secteurs sous le seuil de fiabilité (voir MIN_OBS_RELIABLE)."""
+    best = None
+    for code in SECTOR_TO_BOROUGH:  # restreint aux secteurs de la Ville de Montréal
+        t = total_pond.get(code)
+        v = velo_pond.get(code, 0)
+        obs_total = total_obs.get(code, 0)
+        if not t:
+            continue
+        if obs_total < MIN_OBS_RELIABLE:
+            continue
+        pct = 100 * v / t
+        if best is None or pct > best["part_velo_pct"]:
+            best = {
+                "code_secteur": code,
+                "nom_secteur": sector_names.get(code, code),
+                "arrondissement": SECTOR_TO_BOROUGH[code],
+                "part_velo_pct": round(pct, 2),
+                "deplacements_total": round(t),
+                "observations_brutes": obs_total,
+            }
+    return best
 
 
 def main():
@@ -129,10 +195,16 @@ def main():
     download(PM23_URL, pm23_path)
     download(EOD18_URL, eod18_path)
 
+    log("Reading sector name dictionary (2023 file)...")
+    sector_names = read_sector_names(pm23_path)
+
     log("Processing 2023 (Perspectives mobilité)...")
-    velo23, total23 = velo_share_by_borough(pm23_path)
+    velo_pond_23, total_pond_23, velo_obs_23, total_obs_23 = velo_sums_by_sector(pm23_path)
     log("Processing 2018 (enquête origine-destination)...")
-    velo18, total18 = velo_share_by_borough(eod18_path)
+    velo_pond_18, total_pond_18, velo_obs_18, total_obs_18 = velo_sums_by_sector(eod18_path)
+
+    velo23, total23 = aggregate_to_boroughs(velo_pond_23, total_pond_23)
+    velo18, total18 = aggregate_to_boroughs(velo_pond_18, total_pond_18)
 
     boroughs = sorted(set(SECTOR_TO_BOROUGH.values()))
     rows = []
@@ -148,6 +220,10 @@ def main():
             "deplacements_total_2023": round(t23) if t23 else None,
             "deplacements_total_2018": round(t18) if t18 else None,
         })
+
+    log("Finding the single highest-share sub-sector (2023 and 2018)...")
+    top23 = top_sector(velo_pond_23, total_pond_23, velo_obs_23, total_obs_23, sector_names)
+    top18 = top_sector(velo_pond_18, total_pond_18, velo_obs_18, total_obs_18, sector_names)
 
     out = {
         "description": (
@@ -169,6 +245,16 @@ def main():
             "scripts/analyze_velo_secteurs.py."
         ),
         "arrondissements": rows,
+        "secteur_max_velo": {
+            "description": (
+                f"Secteur de pondération (intra-arrondissement, échelle plus fine que l'arrondissement) "
+                f"avec la part vélo la plus élevée, parmi les secteurs ayant au moins "
+                f"{MIN_OBS_RELIABLE} observations brutes dans l'enquête (seuil de fiabilité utilisé par "
+                f"l'ARTM elle-même)."
+            ),
+            "2023": top23,
+            "2018": top18,
+        },
     }
 
     out_path = DATA_DIR / "velo_secteurs.json"
@@ -178,6 +264,8 @@ def main():
 
     for r in sorted(rows, key=lambda r: (r["part_velo_2023_pct"] or -1), reverse=True):
         log(f"  {r['arrondissement']:<45} 2018={r['part_velo_2018_pct']}%  2023={r['part_velo_2023_pct']}%")
+    log(f"Top secteur 2023: {top23}")
+    log(f"Top secteur 2018: {top18}")
 
 
 if __name__ == "__main__":
