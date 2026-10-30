@@ -12,6 +12,7 @@ import csv
 import io
 import json
 import math
+import re
 import sys
 import time
 import urllib.request
@@ -461,6 +462,352 @@ def build_zones_tarifaires():
 
 
 # ---------------------------------------------------------------------------
+# 8. Métro STM — kilométrage réel des voitures et incidents
+#
+# Fichiers CSV de la STM (séparateur ";", décimales à virgule, milliers avec
+# espace insécable) référencés dans le catalogue ARTM. Le kilométrage est en
+# km-voiture : un train de métro STM compte toujours 9 voitures (MR-73 en
+# 3 éléments de 3, Azur en rame fixe de 9), d'où km-train = km-voiture / 9.
+# ---------------------------------------------------------------------------
+
+METRO_LINES = ["Ligne verte", "Ligne orange", "Ligne jaune", "Ligne bleue"]
+MATERIEL = {"10": "Azur (MPM-10)", "73": "MR-73"}
+INCIDENT_LONG = {"05 à 09 min", "10 à 14 min", "15 à 19 min", "20 à 24 min", "25 à 29 min", "30 min et plus"}
+
+
+def stm_num(s):
+    s = (s or "").strip()
+    if s in ("", "#"):
+        return 0.0
+    return float("".join(s.split()).replace(" ", "").replace(",", "."))
+
+
+def stm_csv_rows(raw, header_marker=None):
+    text = raw.decode("utf-8-sig")
+    if header_marker:
+        # Le CSV des incidents commence par une ligne de note avant l'en-tête.
+        text = text[text.index(header_marker):]
+    return csv.DictReader(io.StringIO(text), delimiter=";")
+
+
+def build_metro_stm():
+    log("Fetching STM metro mileage + incidents...")
+    pkg_km = ckan_package_show("stm-kilometrage-realise-par-les-voitures-de-metro-de-la-stm")
+    pkg_inc = ckan_package_show("incidents-du-reseau-du-metro")
+    km_raw = http_get(find_resource(pkg_km, fmt="csv")["url"], timeout=180)
+    inc_raw = http_get(find_resource(pkg_inc, fmt="csv")["url"], timeout=180)
+    record_source("metro-km", pkg_km["title"], "https://donnees.artm.quebec/catalogue/dataset/stm-kilometrage-realise-par-les-voitures-de-metro-de-la-stm")
+    record_source("metro-incidents", pkg_inc["title"], "https://donnees.artm.quebec/catalogue/dataset/incidents-du-reseau-du-metro")
+
+    km_line_year = {}       # (ligne, année) -> km-voiture
+    km_mat_month = {}       # (matériel, "AAAA-MM") -> km-voiture
+    km_month = {}           # "AAAA-MM" -> km-voiture
+    km_compo_year = {}      # (composition, matériel, année) -> km-voiture
+    weekday_km = {}         # année -> km-voiture en jour de semaine
+    weekday_dates = {}      # année -> set(dates "Semaine")
+    for r in stm_csv_rows(km_raw):
+        km = stm_num(r["Km voiture"])
+        y, ym, ligne, mat = r["Année"], r["Année/mois"], r["Ligne"], r["Type matériel"]
+        km_month[ym] = km_month.get(ym, 0) + km
+        if ligne in METRO_LINES:
+            km_line_year[(ligne, y)] = km_line_year.get((ligne, y), 0) + km
+        if mat in MATERIEL:
+            km_mat_month[(mat, ym)] = km_mat_month.get((mat, ym), 0) + km
+            k = (r["Composition du train"], mat, y)
+            km_compo_year[k] = km_compo_year.get(k, 0) + km
+        if r["Type de jour"] == "Semaine":
+            weekday_km[y] = weekday_km.get(y, 0) + km
+            weekday_dates.setdefault(y, set()).add(r["Date"])
+
+    months = sorted(km_month)
+    last_month = months[-1]
+    years = sorted({ym[:4] for ym in months})
+    full_years = [y for y in years if sum(1 for m in months if m.startswith(y)) == 12]
+    # Comparaison à période égale (janvier → dernier mois publié) pour l'année en cours.
+    ytd_suffix = last_month[5:]
+    km_ytd = {y: sum(v for m, v in km_month.items() if m.startswith(y) and m[5:] <= ytd_suffix) for y in years}
+
+    top_trains = {}
+    for y in full_years:
+        best = max(((c, mat, v) for (c, mat, yy), v in km_compo_year.items() if yy == y and mat == "10"),
+                   key=lambda t: t[2], default=None)
+        if best:
+            top_trains[y] = {"composition": best[0], "materiel": MATERIEL[best[1]], "km_train": round(best[2] / 9)}
+
+    # --- incidents ---
+    incidents = list(stm_csv_rows(inc_raw, header_marker="Numero d'incident"))
+    inc_last_month = max(r["Année civile/mois"] for r in incidents)
+    inc_years = sorted({r["Année civile"] for r in incidents})
+
+    def count(pred):
+        out = {}
+        for r in incidents:
+            if pred(r):
+                out[r["Année civile"]] = out.get(r["Année civile"], 0) + 1
+        return dict(sorted(out.items()))
+
+    long_by_line = {L: count(lambda r, L=L: r["Ligne"] == L and r["Incident en minutes"] in INCIDENT_LONG) for L in METRO_LINES}
+    over30 = count(lambda r: r["Incident en minutes"] == "30 min et plus")
+    evacuations = count(lambda r: r["Évacuation"] not in ("", "#"))
+    urgences = count(lambda r: r["Urgence métro"] == "1")
+
+    # Pannes attribuées au matériel roulant, rapportées au km parcouru sur la
+    # même période (les incidents peuvent être publiés avec un décalage).
+    pannes_par_mkm = {}
+    for mat, label in MATERIEL.items():
+        series = {}
+        for y in inc_years:
+            months_y = {r["Année civile/mois"] for r in incidents if r["Année civile"] == y}
+            n = sum(1 for r in incidents if r["Année civile"] == y and r["Cause primaire"] == "Matériel roulant" and r["Type de matériel"] == mat)
+            km = sum(km_mat_month.get((mat, m), 0) for m in months_y)
+            if km > 0:
+                series[y] = round(n / (km / 1e6), 2)
+        pannes_par_mkm[label] = series
+
+    # Causes des incidents de 5 min et plus, sur les 3 dernières années complètes.
+    cause_years = [y for y in inc_years if y < inc_last_month[:4]][-3:]
+    causes = {}
+    for r in incidents:
+        if r["Année civile"] in cause_years and r["Incident en minutes"] in INCIDENT_LONG:
+            sec = r["Cause secondaire"]
+            if r["Cause primaire"] == "Matériel roulant":
+                label = f"Matériel roulant — {sec}"
+            elif r["Cause primaire"] == "Exploitation trains":
+                label = "Exploitation des trains"
+            elif r["Cause primaire"] == "#N/A":
+                label = "Non précisée"
+            else:
+                label = sec
+            causes[label] = causes.get(label, 0) + 1
+    causes_sorted = sorted(causes.items(), key=lambda kv: -kv[1])
+
+    write_json("metro_stm.json", {
+        "description": "Kilométrage réel des voitures de métro (km-voiture) et incidents du réseau du métro, STM. Un train = 9 voitures.",
+        "km_dernier_mois": last_month,
+        "incidents_dernier_mois": inc_last_month,
+        "km_voiture_par_ligne_annee": {L: {y: round(km_line_year.get((L, y), 0)) for y in years} for L in METRO_LINES},
+        "km_voiture_cumul_meme_periode": {"jusqu_au_mois": ytd_suffix, "par_annee": {y: round(v) for y, v in km_ytd.items()}},
+        "km_voiture_par_mois": {m: round(km_month[m]) for m in months},
+        "km_voiture_par_materiel_annee": {
+            label: {y: round(sum(v for (mm, ym), v in km_mat_month.items() if mm == mat and ym.startswith(y))) for y in years}
+            for mat, label in MATERIEL.items()
+        },
+        "km_train_par_jour_semaine": {y: round(weekday_km[y] / 9 / len(weekday_dates[y])) for y in full_years if weekday_dates.get(y)},
+        "train_azur_le_plus_roule": top_trains,
+        "incidents_5min_plus_par_ligne": long_by_line,
+        "incidents_30min_plus": over30,
+        "evacuations": evacuations,
+        "urgences_metro": urgences,
+        "pannes_materiel_roulant_par_million_km_voiture": pannes_par_mkm,
+        "causes_5min_plus": {"annees": cause_years, "rows": [{"cause": c, "n": n} for c, n in causes_sorted]},
+    })
+
+
+# ---------------------------------------------------------------------------
+# 9. REM — offre planifiée (GTFS)
+# ---------------------------------------------------------------------------
+
+def build_rem():
+    import zipfile
+    log("Fetching REM GTFS...")
+    pkg = ckan_package_show("offres-de-service-planifie-du-reseau-express-metropolitain")
+    res = find_resource(pkg, name_contains="récente")
+    zf = zipfile.ZipFile(io.BytesIO(http_get(res["url"], timeout=180)))
+    record_source("rem-gtfs", pkg["title"], "https://donnees.artm.quebec/catalogue/dataset/offres-de-service-planifie-du-reseau-express-metropolitain")
+
+    def rows(name):
+        return list(csv.DictReader(io.StringIO(zf.read(name).decode("utf-8-sig"))))
+
+    routes = rows("routes.txt")
+    trips = rows("trips.txt")
+    stops = rows("stops.txt")
+    feed = rows("feed_info.txt")[0]
+    weekday_services = {c["service_id"] for c in rows("calendar.txt") if c["wednesday"] == "1"}
+
+    pts = {}
+    for p in rows("shapes.txt"):
+        pts.setdefault(p["shape_id"], []).append((int(p["shape_pt_sequence"]), float(p["shape_pt_lon"]), float(p["shape_pt_lat"])))
+    shape_km = {k: line_length_m([(lon, lat) for _, lon, lat in sorted(v)]) / 1000 for k, v in pts.items()}
+
+    wk = [t for t in trips if t["service_id"] in weekday_services]
+    per_route = []
+    for r in routes:
+        rt = [t for t in wk if t["route_id"] == r["route_id"]]
+        if not rt:
+            continue
+        per_route.append({
+            "nom": r["route_long_name"],
+            "departs_jour_semaine": len(rt),
+            "longueur_km": round(max(shape_km[t["shape_id"]] for t in rt), 1),
+        })
+
+    write_json("rem.json", {
+        "description": "Offre planifiée du REM pour un jour de semaine type, calculée à partir du GTFS publié.",
+        "gtfs_version": feed.get("feed_version"),
+        "gtfs_debut": feed.get("feed_start_date"),
+        "stations": sum(1 for s in stops if s.get("location_type") == "1"),
+        "departs_jour_semaine": len(wk),
+        "km_train_jour_semaine": round(sum(shape_km[t["shape_id"]] for t in wk)),
+        "services": per_route,
+    })
+
+
+# ---------------------------------------------------------------------------
+# 10. Ventes de titres ARTM (quantités et montants nets, quotidiens)
+# ---------------------------------------------------------------------------
+
+def build_ventes_titres():
+    log("Fetching ventes de titres...")
+    pkg = ckan_package_show("ventes-et-remboursements-des-titres-de-l-artm")
+    res = find_resource(pkg, name_contains="ventes et remboursements")
+    record_source("ventes-titres", pkg["title"], "https://donnees.artm.quebec/catalogue/dataset/ventes-et-remboursements-des-titres-de-l-artm")
+    rows = fetch_csv_rows(res["url"])
+    last_date = max(r["DateTransaction"] for r in rows)
+    cutoff = last_date[5:]  # même période (1er janvier → dernier jour publié) chaque année
+    qte, montant = {}, {}
+    for r in rows:
+        d = r["DateTransaction"]
+        if d[5:] > cutoff:
+            continue
+        k = (r["TypeTitre"], d[:4])
+        qte[k] = qte.get(k, 0) + float(r["QuantiteNette"] or 0)
+        montant[k] = montant.get(k, 0) + float(r["MontantNet"] or 0)
+    types = sorted({t for t, _ in qte})
+    years = sorted({y for _, y in qte})
+    write_json("ventes_titres.json", {
+        "description": "Ventes nettes de titres ARTM, cumul du 1er janvier au même jour chaque année (comparaison à période égale).",
+        "derniere_date": last_date,
+        "quantite": {t: {y: round(qte.get((t, y), 0)) for y in years} for t in types},
+        "montant": {t: {y: round(montant.get((t, y), 0)) for y in years} for t in types},
+    })
+
+
+# ---------------------------------------------------------------------------
+# 11. Compteurs vélo permanents (Eco-Compteur, Ville de Montréal)
+#
+# Fichiers annuels au pas de 15 minutes (~80 Mo chacun). Pour ne pas tout
+# retélécharger chaque semaine, les agrégats mensuels par compteur des années
+# terminées sont gardés dans data/compteurs_velo_cache.json ; seule l'année
+# en cours (et toute année absente du cache) est recalculée.
+# ---------------------------------------------------------------------------
+
+VELO_COMPTEUR_YEARS_FROM = 2019
+VELO_COMPTEUR_SKIP = {2020, 2021, 2022}  # années pandémiques : pas utiles aux comparaisons affichées
+VELO_MAX_VARIATION = 60  # % — au-delà, rupture probable (compteur déplacé, en panne, piste refaite)
+
+
+def _compteurs_year(url):
+    """Agrège un fichier annuel en {compteur: {"mois": {MM: n}, "jours": {MM: nb jours avec données}, "record": [date, n]}}."""
+    daily = {}
+    for r in csv.DictReader(io.StringIO(http_get(url, timeout=300).decode("utf-8-sig"))):
+        v = r.get("nb_passages")
+        if v in (None, "", "NA"):
+            continue
+        d = daily.setdefault(r["id_compteur"], {})
+        d[r["date"]] = d.get(r["date"], 0) + int(float(v))
+    out = {}
+    for c, days in daily.items():
+        mois, jours = {}, {}
+        for date, n in days.items():
+            m = date[5:7]
+            mois[m] = mois.get(m, 0) + n
+            jours[m] = jours.get(m, 0) + 1
+        rec = max(days.items(), key=lambda kv: kv[1])
+        out[c] = {"mois": mois, "jours": jours, "record": list(rec), "dernier_jour": max(days)}
+    return out
+
+
+def build_compteurs_velo():
+    import calendar
+    log("Fetching bike counters (compteurs vélo)...")
+    pkg = ckan_package_show("cyclistes")
+    record_source("compteurs-velo", pkg["title"], "https://donnees.artm.quebec/catalogue/dataset/cyclistes")
+    noms = {}
+    for r in csv.DictReader(io.StringIO(http_get(find_resource(pkg, name_contains="localisation")["url"]).decode("utf-8-sig")), delimiter=";"):
+        noms[r["instance"]] = r["Nom Rue Global"]
+
+    cache_path = DATA_DIR / "compteurs_velo_cache.json"
+    cache = json.loads(cache_path.read_text(encoding="utf-8")) if cache_path.exists() else {}
+    this_year = datetime.now(timezone.utc).year
+    for res in pkg["resources"]:
+        m = re.match(r"Velos - Comptage (\d{4}) - Eco-Compteur", res.get("name") or "")
+        if not m:
+            continue
+        y = int(m.group(1))
+        if y < VELO_COMPTEUR_YEARS_FROM or y in VELO_COMPTEUR_SKIP:
+            continue
+        if str(y) in cache and y < this_year:
+            continue
+        log(f"  {y}...")
+        cache[str(y)] = _compteurs_year(res["url"])
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump(cache, f, ensure_ascii=False, separators=(",", ":"))
+
+    years = sorted(cache)
+    cur = years[-1]
+    dernier_jour = max(c["dernier_jour"] for c in cache[cur].values())
+    full_years = [y for y in years if y != cur or dernier_jour.endswith("12-31")]
+    ref = full_years[-1]
+    # Dernier mois complet de l'année en cours (pour comparer à période égale).
+    last_full_month = int(dernier_jour[5:7]) - (0 if dernier_jour[8:] == f"{calendar.monthrange(int(cur), int(dernier_jour[5:7]))[1]:02d}" else 1)
+
+    def mois_complets(y, c, months):
+        """Vrai si le compteur a des données ≥ 90 % des jours de chacun des mois."""
+        d = cache[y].get(c)
+        return d is not None and all(d["jours"].get(f"{m:02d}", 0) >= 0.9 * calendar.monthrange(int(y), m)[1] for m in months)
+
+    def total(y, c, months):
+        return sum(cache[y][c]["mois"].get(f"{m:02d}", 0) for m in months)
+
+    def compare(a, b, months):
+        kept, exclus, ta, tb = 0, 0, 0, 0
+        for c in cache[b]:
+            if not (mois_complets(a, c, months) and mois_complets(b, c, months)):
+                continue
+            va, vb = total(a, c, months), total(b, c, months)
+            if va == 0 or abs(100 * (vb - va) / va) > VELO_MAX_VARIATION:
+                exclus += 1
+                continue
+            kept += 1
+            ta += va
+            tb += vb
+        return {"de": a, "a": b, "mois": [months[0], months[-1]], "compteurs": kept, "compteurs_exclus": exclus,
+                "passages_de": ta, "passages_a": tb, "variation_pct": round(100 * (tb - ta) / ta, 1) if ta else None}
+
+    all_months = list(range(1, 13))
+    comparaisons = []
+    if "2019" in cache and ref != "2019":
+        comparaisons.append(compare("2019", ref, all_months))
+    if str(int(ref) - 1) in cache:
+        comparaisons.append(compare(str(int(ref) - 1), ref, all_months))
+    if cur != ref and last_full_month >= 1:
+        comparaisons.append(compare(ref, cur, list(range(1, last_full_month + 1))))
+
+    complets = [c for c in cache[ref] if mois_complets(ref, c, all_months)]
+    tops = sorted(complets, key=lambda c: -total(ref, c, all_months))[:12]
+    saison = {f"{m:02d}": sum(cache[ref][c]["mois"].get(f"{m:02d}", 0) for c in complets) for m in all_months}
+    total_ref = sum(saison.values())
+    hiver = sum(saison[m] for m in ("12", "01", "02", "03"))
+    rec_c = max(complets, key=lambda c: cache[ref][c]["record"][1])
+    jours_ref = 366 if calendar.isleap(int(ref)) else 365
+
+    write_json("compteurs_velo.json", {
+        "description": "Passages de vélos aux compteurs permanents de la Ville de Montréal (Eco-Compteur).",
+        "annee_reference": ref,
+        "annee_courante": cur,
+        "dernier_jour": dernier_jour,
+        "compteurs_actifs_reference": len(complets),
+        "top_sites": [{"nom": noms.get(c, c), "passages": total(ref, c, all_months),
+                       "moyenne_jour": round(total(ref, c, all_months) / jours_ref)} for c in tops],
+        "record_jour": {"nom": noms.get(rec_c, rec_c), "date": cache[ref][rec_c]["record"][0], "passages": cache[ref][rec_c]["record"][1]},
+        "saisonnalite": saison,
+        "part_hiver_pct": round(100 * hiver / total_ref, 1) if total_ref else None,
+        "comparaisons": comparaisons,
+        "seuil_exclusion_pct": VELO_MAX_VARIATION,
+    })
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -474,6 +821,10 @@ def main():
         ("velo_mtl", build_velo_mtl_stats),
         ("terminus_stationnements", build_terminus_stationnements),
         ("zones_tarifaires", build_zones_tarifaires),
+        ("metro_stm", build_metro_stm),
+        ("rem", build_rem),
+        ("ventes_titres", build_ventes_titres),
+        ("compteurs_velo", build_compteurs_velo),
     ]
     errors = []
     for name, fn in steps:

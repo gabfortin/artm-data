@@ -20,9 +20,11 @@
     <nav class="main-nav" aria-label="Navigation principale">
       <a href="#parts-modales">Parts modales</a>
       <a href="#achalandage">Achalandage</a>
+      <a href="#reseau">Métro &amp; REM</a>
       <a href="#tarifs">Tarifs</a>
       <a href="#infrastructure">Infrastructures</a>
       <a href="#carte">Carte</a>
+      <a href="#velo">Vélo</a>
       <a href="#bixi">BIXI</a>
       <a href="#methodologie">Sources</a>
     </nav>
@@ -89,7 +91,7 @@
         <div class="stat-strip" id="stat-velo-highlights" style="margin-bottom:16px"></div>
         <div class="stat-strip" id="stat-velo-centraux" style="margin-bottom:16px"></div>
         <label class="central-toggle"><input type="checkbox" id="toggle-central-velo"> Afficher seulement les arrondissements centraux (Plateau, Rosemont–La Petite-Patrie, Villeray–Saint-Michel–Parc-Extension, Ville-Marie)</label>
-        <div class="chart-box" id="chart-velo-secteurs-box" style="height:560px"><canvas id="chart-velo-secteurs"></canvas></div>
+        <div class="chart-box h-boroughs" id="chart-velo-secteurs-box"><canvas id="chart-velo-secteurs"></canvas></div>
         <button class="table-toggle" data-table-target="table-velo-secteurs">Voir les données en tableau</button>
         <div class="data-table-wrap" id="table-velo-secteurs"></div>
         <p class="callout" style="margin-top:14px">
@@ -113,7 +115,7 @@
         <div class="stat-strip" id="stat-tc-top" style="margin-bottom:16px"></div>
         <div class="stat-strip" id="stat-tc-centraux" style="margin-bottom:16px"></div>
         <label class="central-toggle"><input type="checkbox" id="toggle-central-tc"> Afficher seulement les arrondissements centraux</label>
-        <div class="chart-box" style="height:560px"><canvas id="chart-tc-secteurs"></canvas></div>
+        <div class="chart-box h-boroughs"><canvas id="chart-tc-secteurs"></canvas></div>
         <button class="table-toggle" data-table-target="table-tc-secteurs">Voir les données en tableau</button>
         <div class="data-table-wrap" id="table-tc-secteurs"></div>
         <p class="callout gap" style="margin-top:14px">
@@ -131,7 +133,7 @@
         <div class="stat-strip" id="stat-auto-top" style="margin-bottom:16px"></div>
         <div class="stat-strip" id="stat-auto-centraux" style="margin-bottom:16px"></div>
         <label class="central-toggle"><input type="checkbox" id="toggle-central-auto"> Afficher seulement les arrondissements centraux</label>
-        <div class="chart-box" style="height:560px"><canvas id="chart-auto-secteurs"></canvas></div>
+        <div class="chart-box h-boroughs"><canvas id="chart-auto-secteurs"></canvas></div>
         <button class="table-toggle" data-table-target="table-auto-secteurs">Voir les données en tableau</button>
         <div class="data-table-wrap" id="table-auto-secteurs"></div>
       </div>
@@ -142,7 +144,7 @@
         <div class="stat-strip" id="stat-marche-top" style="margin-bottom:16px"></div>
         <div class="stat-strip" id="stat-marche-centraux" style="margin-bottom:16px"></div>
         <label class="central-toggle"><input type="checkbox" id="toggle-central-marche"> Afficher seulement les arrondissements centraux</label>
-        <div class="chart-box" style="height:560px"><canvas id="chart-marche-secteurs"></canvas></div>
+        <div class="chart-box h-boroughs"><canvas id="chart-marche-secteurs"></canvas></div>
         <button class="table-toggle" data-table-target="table-marche-secteurs">Voir les données en tableau</button>
         <div class="data-table-wrap" id="table-marche-secteurs"></div>
       </div>
@@ -153,7 +155,7 @@
         <div class="stat-strip" id="stat-actif-top" style="margin-bottom:16px"></div>
         <div class="stat-strip" id="stat-actif-centraux" style="margin-bottom:16px"></div>
         <label class="central-toggle"><input type="checkbox" id="toggle-central-actif"> Afficher seulement les arrondissements centraux</label>
-        <div class="chart-box" style="height:560px"><canvas id="chart-actif-secteurs"></canvas></div>
+        <div class="chart-box h-boroughs"><canvas id="chart-actif-secteurs"></canvas></div>
         <button class="table-toggle" data-table-target="table-actif-secteurs">Voir les données en tableau</button>
         <div class="data-table-wrap" id="table-actif-secteurs"></div>
         <p class="callout" style="margin-top:14px">
@@ -161,6 +163,22 @@
           tous les déplacements des résident·e·s (24 h, tous motifs). Source : matrices de déplacements ARTM
           2018/2023 — calcul détaillé dans <code class="inline">scripts/analyze_modes_secteurs.py</code>.
         </p>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <h3>Sur les campus : enquête Enseignement supérieur 2025</h3>
+        <p class="chart-caption" id="caption-campus">Volet distinct de Perspectives mobilité, mené à l'automne 2025 auprès des étudiant·e·s et employé·e·s de quatre établissements.</p>
+        <div class="grid-2">
+          <div>
+            <h3 style="font-size:13.5px; margin-bottom:10px">Étudiant·e·s</h3>
+            <div class="stat-strip" id="stat-campus-etudiants"></div>
+          </div>
+          <div>
+            <h3 style="font-size:13.5px; margin-bottom:10px">Employé·e·s</h3>
+            <div class="stat-strip" id="stat-campus-employes"></div>
+          </div>
+        </div>
+        <p class="callout" style="margin-top:14px" id="callout-campus"></p>
       </div>
     </div>
   </section>
@@ -202,6 +220,83 @@
         (chaque montée est comptée). Les deux ne sont pas directement comparables en valeur absolue — voir
         <a href="#methodologie">méthodologie</a>.
       </p>
+    </div>
+  </section>
+
+  <section class="panel" id="reseau">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Données d'exploitation, 2023–2026</p>
+          <h2>Sous le capot : ce que le métro et le REM font vraiment</h2>
+          <p class="section-intro">Rien ici ne vient de l'enquête Perspectives mobilité : ce sont les données d'exploitation que la STM, le REM et l'ARTM
+          publient en continu (kilométrage réel de chaque voiture de métro, chaque incident, horaires GTFS, ventes de titres jour par jour).</p>
+        </div>
+        <span class="source-tag" id="reseau-updated"></span>
+      </div>
+
+      <div class="stat-strip" id="stat-reseau-top" style="margin-bottom:18px"></div>
+
+      <div class="card">
+        <h3>Kilomètres parcourus par ligne de métro</h3>
+        <p class="chart-caption">Km-voiture réellement roulés par année complète (un train = 9 voitures). La ligne orange fait à elle seule environ la moitié du kilométrage du réseau.</p>
+        <div class="chart-box h-320"><canvas id="chart-metro-km-lignes"></canvas></div>
+        <button class="table-toggle" data-table-target="table-metro-km-lignes">Voir les données en tableau</button>
+        <div class="data-table-wrap" id="table-metro-km-lignes"></div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <h3>Kilométrage quotidien du métro, depuis 2023</h3>
+        <p class="chart-caption">Km-voiture par jour (moyenne de chaque mois), toutes lignes. Les creux de juin et novembre 2025 coïncident avec les grèves du personnel d'entretien de la STM, pendant lesquelles le service a été réduit.</p>
+        <div class="chart-box h-280"><canvas id="chart-metro-km-mois"></canvas></div>
+      </div>
+
+      <div class="grid-2" style="margin-top:18px">
+        <div class="card">
+          <h3>MR-73 vs Azur : pannes par million de km</h3>
+          <p class="chart-caption">Incidents dont la cause primaire est le matériel roulant, rapportés aux km-voiture parcourus par chaque type de train sur la même période.</p>
+          <div class="chart-box h-280"><canvas id="chart-metro-pannes"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Ce que ça veut dire</h3>
+          <div class="stat-strip" id="stat-metro-materiel"></div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:18px">
+        <div class="card">
+          <h3>Incidents de 5 minutes et plus, par ligne</h3>
+          <p class="chart-caption">Arrêts ou ralentissements de service d'au moins 5 minutes. La ligne verte et la ligne orange concentrent presque tout.</p>
+          <div class="chart-box h-320"><canvas id="chart-metro-incidents"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Pourquoi le métro s'arrête</h3>
+          <p class="chart-caption" id="caption-metro-causes">Causes des incidents de 5 minutes et plus.</p>
+          <div class="chart-box h-320"><canvas id="chart-metro-causes"></canvas></div>
+        </div>
+      </div>
+      <div class="stat-strip" id="stat-metro-incidents" style="margin-top:18px"></div>
+
+      <div class="card" style="margin-top:18px">
+        <h3>Le REM, d'après son propre horaire</h3>
+        <p class="chart-caption" id="caption-rem">Offre planifiée pour un jour de semaine type, calculée à partir du GTFS publié par le REM.</p>
+        <div class="stat-strip" id="stat-rem"></div>
+        <p class="callout" style="margin-top:14px" id="callout-rem"></p>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <h3>Quels titres les gens achètent</h3>
+        <p class="chart-caption" id="caption-ventes">Ventes nettes de titres ARTM, du 1er janvier au même jour chaque année.</p>
+        <div class="stat-strip" id="stat-ventes" style="margin-bottom:16px"></div>
+        <div class="chart-box h-320"><canvas id="chart-ventes"></canvas></div>
+        <button class="table-toggle" data-table-target="table-ventes">Voir les données en tableau</button>
+        <div class="data-table-wrap" id="table-ventes"></div>
+        <p class="callout" style="margin-top:14px">
+          <strong>À lire avec prudence :</strong> la refonte tarifaire de 2022 (zones A à D) a changé la gamme de titres
+          offerts, ce qui explique probablement une partie de la bascule des multi-passages vers les billets unitaires. Le recul de la
+          passe mensuelle, lui, est cohérent avec le télétravail : moins de gens se déplacent cinq jours sur cinq.
+        </p>
+      </div>
     </div>
   </section>
 
@@ -279,6 +374,61 @@
     </div>
   </section>
 
+  <section class="panel" id="velo">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Données terrain, 2023–2026</p>
+          <h2>Le vélo, compté passage par passage</h2>
+          <p class="section-intro">Deux sources indépendantes des enquêtes : les compteurs permanents de la Ville de Montréal, qui comptent chaque vélo
+          toutes les 15 minutes, et l'historique complet des trajets BIXI (chaque location, de station à station).</p>
+        </div>
+        <span class="source-tag" id="velo-updated"></span>
+      </div>
+
+      <div class="stat-strip" id="stat-compteurs" style="margin-bottom:18px"></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Les axes les plus fréquentés</h3>
+          <p class="chart-caption" id="caption-compteurs-top">Passages annuels par compteur (un compteur = un sens de circulation sur certains axes).</p>
+          <div class="chart-box h-360 h-tall-mobile"><canvas id="chart-compteurs-top"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Le vélo au fil des mois</h3>
+          <p class="chart-caption" id="caption-compteurs-saison">Passages mensuels, compteurs actifs toute l'année.</p>
+          <div class="chart-box h-360"><canvas id="chart-compteurs-saison"></canvas></div>
+        </div>
+      </div>
+      <p class="callout" style="margin-top:14px" id="callout-compteurs"></p>
+
+      <h3 style="margin-top:34px; margin-bottom:4px">BIXI : chaque trajet, depuis 2019</h3>
+      <p class="section-intro" style="margin-bottom:18px" id="intro-bixi-hist">Historique ouvert des déplacements BIXI, calculé par ce site trajet par trajet.</p>
+      <div class="stat-strip" id="stat-bixi-hist" style="margin-bottom:18px"></div>
+
+      <div class="card">
+        <h3>Trajets BIXI par mois</h3>
+        <p class="chart-caption">Nombre de trajets complétés (avec station d'arrivée), par mois et par année.</p>
+        <div class="chart-box h-320"><canvas id="chart-bixi-mois"></canvas></div>
+        <button class="table-toggle" data-table-target="table-bixi-mois">Voir les données en tableau</button>
+        <div class="data-table-wrap" id="table-bixi-mois"></div>
+      </div>
+
+      <div class="grid-2" style="margin-top:18px">
+        <div class="card">
+          <h3>À quelle heure on prend un BIXI</h3>
+          <p class="chart-caption" id="caption-bixi-heures">Part des trajets selon l'heure de départ.</p>
+          <div class="chart-box h-280"><canvas id="chart-bixi-heures"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Stations de départ les plus actives</h3>
+          <p class="chart-caption" id="caption-bixi-stations">Trajets au départ de chaque station.</p>
+          <div class="chart-box h-280"><canvas id="chart-bixi-stations"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="panel" id="bixi">
     <div class="wrap">
       <div class="section-head">
@@ -316,6 +466,14 @@
           <div class="src-item">
             <span class="src-name">Parts modales (enquêtes OD / Perspectives mobilité)</span>
             <span class="src-meta">Publiées par l'ARTM tous les ~5 ans — mis à jour à la prochaine édition, pas chaque semaine</span>
+          </div>
+          <div class="src-item">
+            <span class="src-name">Historique des trajets BIXI (2019, 2023–2026)</span>
+            <span class="src-meta">Calculé depuis les archives ouvertes de BIXI (<code class="inline">scripts/analyze_bixi.py</code>, plusieurs Go par année) — relancé à la main à chaque nouvelle archive</span>
+          </div>
+          <div class="src-item">
+            <span class="src-name">Enquête Enseignement supérieur 2025 (ARTM)</span>
+            <span class="src-meta">Chiffres reportés à la main depuis le rapport PDF (<code class="inline">data/enseignement_superieur_2025.json</code>) — microdonnées non diffusées</span>
           </div>
           <div class="src-item">
             <span class="src-name">Part du vélo par arrondissement (matrices de déplacements 2018 et 2023)</span>

@@ -63,7 +63,10 @@ git add data/ && git commit -m "data: mise à jour manuelle" && git push
 - **Automatisé chaque semaine** : achalandage par société de transport,
   tarifs, voies/mesures préférentielles pour autobus, réseau express vélo,
   réseau cyclable de Montréal (statistiques), terminus et stationnements
-  incitatifs, zones tarifaires.
+  incitatifs, zones tarifaires, kilométrage réel et incidents du métro (STM),
+  offre planifiée du REM (GTFS), ventes de titres ARTM et compteurs vélo
+  permanents de Montréal (seule l'année en cours est retéléchargée ; les
+  années terminées sont gardées dans `data/compteurs_velo_cache.json`).
 - **Sourcé manuellement** (`data/parts_modales.json`) : les parts modales
   2003–2023, qui viennent des enquêtes origine-destination / Perspectives
   mobilité de l'ARTM, publiées tous les ~5 ans seulement. Ce fichier n'est
@@ -79,6 +82,16 @@ git add data/ && git commit -m "data: mise à jour manuelle" && git push
   pip install openpyxl
   python3 scripts/analyze_velo_secteurs.py
   ```
+- **Sourcé manuellement** (`data/bixi_historique.json`) : statistiques des
+  trajets BIXI (2019, 2023 → année en cours) calculées depuis les archives
+  ouvertes de BIXI avec `scripts/analyze_bixi.py` (stdlib, mais ~1,6 Go
+  d'archives mises en cache dans `.scratch_bixi/`). À relancer quand BIXI
+  publie une nouvelle archive :
+  ```bash
+  python3 scripts/analyze_bixi.py
+  ```
+- **Sourcé manuellement** (`data/enseignement_superieur_2025.json`) : chiffres
+  clés du rapport PDF de l'enquête 2025 Enseignement supérieur de l'ARTM.
 - **En direct, côté navigateur** : le flux [GBFS public de BIXI](https://gbfs.velobixi.com/gbfs/gbfs.json)
   est lu directement par le navigateur de chaque visiteur (pas de donnée
   stockée côté site).

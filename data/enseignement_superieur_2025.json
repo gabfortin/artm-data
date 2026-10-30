@@ -1,0 +1,30 @@
+{
+  "description": "Chiffres-clés du rapport global de l'enquête 2025 Perspectives mobilité – Enseignement supérieur (ARTM, 18 juin 2026). Sourcé manuellement : le rapport est un PDF, les microdonnées ne sont pas diffusées. Valeurs pondérées sauf mention contraire.",
+  "source": "https://donnees.artm.quebec/catalogue/dataset/enquete-2025-enseignement-superieur",
+  "rapport_pdf": "https://donnees.artm.quebec/catalogue/dataset/d2a6f735-8fda-4bfe-8c63-c1613655e5ca/resource/44d91cee-b6c8-5ee3-90af-674ac2032512/download/e25pm_enssup_general_r02_2026-06-18.pdf",
+  "periode_collecte": "octobre–novembre 2025",
+  "institutions": ["INRS", "Polytechnique Montréal", "Université de Montréal", "UQAM"],
+  "reponses_completes": 2877,
+  "etudiants": {
+    "jours_campus_par_semaine": 3.5,
+    "part_tc_pct": 57,
+    "part_combinaison_modes_pct": 15,
+    "distance_mediane_km": 9.7,
+    "distance_moyenne_km": 16.4,
+    "part_auto_solo_parmi_auto_pct": 83.9
+  },
+  "employes": {
+    "jours_campus_par_semaine": 2.8,
+    "part_tc_pct": 43,
+    "part_auto_pct": 21,
+    "distance_mediane_km": 10.6,
+    "distance_moyenne_km": 18.3,
+    "part_auto_solo_parmi_auto_pct": 83.6,
+    "temps_plein_teletravail_compatible_pct": 86,
+    "temps_plein_jours_en_teletravail_pct": 38
+  },
+  "conducteurs_ouverts_a_un_mode_durable": {
+    "conducteurs_ponderes": 8099,
+    "ouverts_ponderes": 2176
+  }
+}

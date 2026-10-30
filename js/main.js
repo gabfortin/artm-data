@@ -36,6 +36,23 @@ function monthKey(annee, mois) {
   return `${annee}-${String(mois).padStart(2, "0")}`;
 }
 
+const narrowQuery = window.matchMedia("(max-width: 600px)");
+function isNarrow() { return narrowQuery.matches; }
+
+// Sur mobile, les noms d'arrondissements (ex. « Villeray–Saint-Michel–Parc-Extension »)
+// sont coupés sur plusieurs lignes plutôt que tronqués par l'axe du graphique.
+function boroughLabel(name, maxLen = 22) {
+  if (!isNarrow()) return name;
+  const parts = name.split(/(?<=–)|(?<= )/);
+  const lines = [];
+  for (const part of parts) {
+    const last = lines[lines.length - 1];
+    if (last != null && (last + part).length <= maxLen) lines[lines.length - 1] = last + part;
+    else lines.push(part);
+  }
+  return lines.map((l) => l.trim());
+}
+
 /* ===========================================================================
    Thème clair/sombre — sélectionné, pas un simple miroir du système
    =========================================================================== */
@@ -58,6 +75,9 @@ function initTheme() {
     try { localStorage.setItem("theme", next); } catch (e) { /* ignore */ }
     for (const fn of redrawCallbacks) fn();
   });
+  // Les étiquettes et graduations dépendent de la largeur : on redessine au
+  // passage du seuil mobile (rotation d'un téléphone, redimensionnement).
+  narrowQuery.addEventListener("change", () => { for (const fn of redrawCallbacks) fn(); });
 }
 
 /* ===========================================================================
@@ -180,7 +200,7 @@ async function initPartsModales(d) {
     chart2 = new Chart(ctx2, {
       type: "bar",
       data: {
-        labels: ["Part des déplacements", "Part des distances parcourues"],
+        labels: ["Déplacements", "Distance parcourue"],
         datasets: [
           { label: "Auto", data: [dTrips.auto, dDist.auto], backgroundColor: cssVar("--series-auto"), stack: "s" },
           { label: "Transport collectif", data: [dTrips.tc, dDist.tc], backgroundColor: cssVar("--series-tc"), stack: "s" },
@@ -309,7 +329,7 @@ async function initVeloSecteurs(d) {
   const renderRows = (rowsIn) => {
     lastRows = rowsIn;
     const rows = [...rowsIn].sort((a, b) => (b.part_velo_2023_pct ?? -1) - (a.part_velo_2023_pct ?? -1));
-    const labels = rows.map((r) => r.arrondissement);
+    const labels = rows.map((r) => boroughLabel(r.arrondissement));
 
     if (chart) chart.destroy();
     chart = new Chart(ctx, {
@@ -372,7 +392,7 @@ function initModeSecteurs(key, block, { colorVar, unitLabel }) {
   const renderRows = (rowsIn) => {
     lastRows = rowsIn;
     const rows = [...rowsIn].sort((a, b) => (b.part_2023_pct ?? -1) - (a.part_2023_pct ?? -1));
-    const labels = rows.map((r) => r.arrondissement);
+    const labels = rows.map((r) => boroughLabel(r.arrondissement));
 
     if (chart) chart.destroy();
     chart = new Chart(ctx, {
@@ -557,6 +577,523 @@ async function initAchalandage(achalandage, meta) {
   registerRedraw(buildRec);
 
   return { byAgency, allMonths, avg2019, regional, regionalValues: values, regionalMonths: months };
+}
+
+/* ===========================================================================
+   2b) Réseau : métro STM (km réels, incidents), REM (GTFS), ventes de titres
+   =========================================================================== */
+
+const MOIS_COURTS = ["jan", "fév", "mars", "avr", "mai", "juin", "juil", "août", "sep", "oct", "nov", "déc"];
+// Abréviation avec point seulement quand le mot est réellement abrégé (« sept. », mais « juin »).
+function moisAbr(m) {
+  const full = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"][m - 1];
+  const abr = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."][m - 1];
+  return abr.length < full.length ? abr : full;
+}
+const METRO_LINES = [
+  ["Ligne verte", "Verte", "--line-verte"],
+  ["Ligne orange", "Orange", "--line-orange"],
+  ["Ligne jaune", "Jaune", "--line-jaune"],
+  ["Ligne bleue", "Bleue", "--line-bleue"],
+];
+const CAUSE_LABELS = {
+  "Méfait volontaire": "Méfait volontaire",
+  "Blessée ou malade": "Personne blessée ou malade",
+  "Service de la voie": "Voie (équipements fixes)",
+  "Service aux trains": "Équipements de service aux trains",
+  "Matériel roulant — MR-73": "Panne de train MR-73",
+  "Matériel roulant — MPM-10": "Panne de train Azur",
+};
+
+// "2026-06" -> "2026 (jan–juin)" quand l'année n'est pas complète.
+function partialYearLabel(year, lastMonth) {
+  if (lastMonth.slice(0, 4) !== year || lastMonth.slice(5) === "12") return year;
+  return `${year} (jan–${MOIS_COURTS[parseInt(lastMonth.slice(5), 10) - 1]})`;
+}
+
+function stat(value, label, colorVar) {
+  return el("div", { class: "stat", style: colorVar ? `border-left-color:${cssVar(colorVar)}` : "" }, [
+    el("div", { class: "stat-value" }, value),
+    el("div", { class: "stat-label" }, label),
+  ]);
+}
+
+function fillStrip(id, stats) {
+  const strip = document.getElementById(id);
+  strip.innerHTML = "";
+  stats.filter(Boolean).forEach((s) => strip.appendChild(s));
+}
+
+function initReseau(metro, rem, ventes, meta) {
+  const src = meta.sources.find((s) => s.label === "metro-km");
+  if (src) document.getElementById("reseau-updated").textContent = `Sources : STM, REM, ARTM · rafraîchi le ${new Date(src.fetched_at).toLocaleDateString("fr-CA")}`;
+
+  const months = Object.keys(metro.km_voiture_par_mois).sort();
+  const years = [...new Set(months.map((m) => m.slice(0, 4)))];
+  const fullYears = years.filter((y) => months.filter((m) => m.startsWith(y)).length === 12);
+  const lastFull = fullYears[fullYears.length - 1];
+  const kmMonth = metro.km_voiture_par_mois;
+  const kmLines = metro.km_voiture_par_ligne_annee;
+  const kmMat = metro.km_voiture_par_materiel_annee;
+  const M = (v) => v / 1e6;
+
+  // --- bandeau de tête ---
+  const ytd = metro.km_voiture_cumul_meme_periode;
+  const curYear = metro.km_dernier_mois.slice(0, 4);
+  const prevYear = String(parseInt(curYear, 10) - 1);
+  const ytdDelta = (100 * (ytd.par_annee[curYear] - ytd.par_annee[prevYear])) / ytd.par_annee[prevYear];
+  const totalLast = METRO_LINES.reduce((a, [k]) => a + kmLines[k][lastFull], 0);
+  const orangeShare = (100 * kmLines["Ligne orange"][lastFull]) / totalLast;
+  const topTrain = metro.train_azur_le_plus_roule[lastFull];
+  fillStrip("stat-reseau-top", [
+    stat(`${fmtDec1.format(M(totalLast))} M km`, `parcourus par les voitures de métro en ${lastFull} (${fmtInt.format(Math.round(totalLast / 9))} km-train)`, "--line-orange"),
+    stat(`${ytdDelta >= 0 ? "+" : ""}${fmtDec1.format(ytdDelta)} %`, `km-voiture de janvier à ${moisAbr(parseInt(ytd.jusqu_au_mois, 10))} ${curYear} vs même période ${prevYear}`, "--line-verte"),
+    topTrain && stat(`${fmtInt.format(topTrain.km_train)} km`, `roulés en ${lastFull} par le train Azur le plus sollicité (rame ${topTrain.composition.slice(0, 3)}), soit ${fmtDec1.format(topTrain.km_train / 40075)} fois le tour de la Terre`, "--line-bleue"),
+    stat(`${fmtInt.format(metro.km_train_par_jour_semaine[lastFull])} km`, `parcourus chaque jour de semaine par l'ensemble des trains du métro (moyenne ${lastFull})`, "--line-jaune"),
+  ]);
+
+  // --- km par ligne et par année ---
+  const ctxLines = document.getElementById("chart-metro-km-lignes");
+  let chartLines;
+  const buildLines = () => {
+    if (chartLines) chartLines.destroy();
+    chartLines = new Chart(ctxLines, {
+      type: "bar",
+      data: {
+        labels: fullYears,
+        datasets: METRO_LINES.map(([key, label, colorVar]) => ({
+          label: `Ligne ${label.toLowerCase()}`,
+          data: fullYears.map((y) => M(kmLines[key][y])),
+          backgroundColor: cssVar(colorVar),
+          stack: "s",
+        })),
+      },
+      options: baseBarOptions({ yTitle: "Millions de km-voiture", stacked: true, tooltipSuffix: " M km", tooltipDecimals: 2 }),
+    });
+  };
+  buildLines();
+  registerRedraw(buildLines);
+  renderTable(
+    "table-metro-km-lignes",
+    ["Année", ...METRO_LINES.map(([, l]) => l), "Total"],
+    years.map((y) => {
+      const vals = METRO_LINES.map(([k]) => kmLines[k][y] || 0);
+      return [partialYearLabel(y, metro.km_dernier_mois), ...vals.map(fmtInt.format), fmtInt.format(vals.reduce((a, b) => a + b, 0))];
+    })
+  );
+
+  // --- km par mois ---
+  const recentMonths = months.filter((m) => m >= "2023-01");
+  const ctxMonths = document.getElementById("chart-metro-km-mois");
+  let chartMonths;
+  const buildMonths = () => {
+    if (chartMonths) chartMonths.destroy();
+    chartMonths = new Chart(ctxMonths, {
+      type: "line",
+      data: {
+        labels: recentMonths,
+        datasets: [{
+          label: "Km-voiture par jour (moyenne du mois)",
+          // Ramené par jour pour neutraliser la longueur des mois (février).
+          data: recentMonths.map((m) => kmMonth[m] / new Date(+m.slice(0, 4), +m.slice(5), 0).getDate() / 1000),
+          borderColor: cssVar("--line-orange"),
+          backgroundColor: cssVar("--line-orange"),
+          borderWidth: 2,
+          pointRadius: 2,
+          tension: 0.15,
+        }],
+      },
+      options: {
+        ...baseLineOptions({ yTitle: "Milliers de km-voiture / jour", tooltipSuffix: " k km", tooltipDecimals: 1 }),
+        plugins: { ...baseLineOptions({}).plugins, legend: { display: false } },
+      },
+    });
+  };
+  buildMonths();
+  registerRedraw(buildMonths);
+
+  // --- MR-73 vs Azur ---
+  const pannes = metro.pannes_materiel_roulant_par_million_km_voiture;
+  const panneYears = Object.keys(pannes["MR-73"]).sort();
+  const ctxPannes = document.getElementById("chart-metro-pannes");
+  let chartPannes;
+  const buildPannes = () => {
+    if (chartPannes) chartPannes.destroy();
+    const ds = (label, colorVar) => ({
+      label,
+      data: panneYears.map((y) => pannes[label][y]),
+      borderColor: cssVar(colorVar),
+      backgroundColor: cssVar(colorVar),
+      borderWidth: 2,
+      pointRadius: 3,
+      tension: 0.15,
+    });
+    chartPannes = new Chart(ctxPannes, {
+      type: "line",
+      data: {
+        labels: panneYears.map((y) => partialYearLabel(y, metro.incidents_dernier_mois)),
+        datasets: [ds("MR-73", "--series-auto"), ds("Azur (MPM-10)", "--series-tc")],
+      },
+      options: baseLineOptions({ yTitle: "Pannes / million de km-voiture", beginAtZero: true, tooltipDecimals: 1 }),
+    });
+  };
+  buildPannes();
+  registerRedraw(buildPannes);
+
+  const lastIncFull = panneYears.filter((y) => y < metro.incidents_dernier_mois.slice(0, 4) || metro.incidents_dernier_mois.endsWith("-12")).pop();
+  const ratio = pannes["MR-73"][lastIncFull] / pannes["Azur (MPM-10)"][lastIncFull];
+  const firstYear = fullYears[0];
+  const mr73Share = (y) => (100 * kmMat["MR-73"][y]) / (kmMat["MR-73"][y] + kmMat["Azur (MPM-10)"][y]);
+  fillStrip("stat-metro-materiel", [
+    stat(`× ${fmtDec1.format(ratio)}`, `incidents de matériel roulant par km : un MR-73 en cause ${fmtDec1.format(ratio)} fois plus qu’un Azur (${lastIncFull})`, "--series-auto"),
+    stat(`${Math.round(mr73Share(firstYear))} % → ${Math.round(mr73Share(lastFull))} %`, `part des km du métro roulés par des MR-73, ${firstYear} → ${lastFull} : les trains de 1976 sont relégués aux lignes bleue et jaune et à une partie de la verte`, "--series-auto"),
+    stat(`${fmtDec1.format(M(kmMat["MR-73"][lastFull]))} M km`, `encore roulés par les MR-73 en ${lastFull} — environ ${fmtInt.format(Math.round(kmMat["MR-73"][lastFull] / 9 / 365))} km-train par jour`, "--series-autre"),
+  ]);
+
+  // --- incidents ≥ 5 min par ligne ---
+  const incLong = metro.incidents_5min_plus_par_ligne;
+  const incYears = Object.keys(metro.incidents_30min_plus).sort();
+  const shownIncYears = incYears.filter((y) => y === "2019" || y >= "2022");
+  const ctxInc = document.getElementById("chart-metro-incidents");
+  let chartInc;
+  const buildInc = () => {
+    if (chartInc) chartInc.destroy();
+    chartInc = new Chart(ctxInc, {
+      type: "bar",
+      data: {
+        labels: shownIncYears.map((y) => (isNarrow() ? y : partialYearLabel(y, metro.incidents_dernier_mois))),
+        datasets: METRO_LINES.map(([key, label, colorVar]) => ({
+          label,
+          data: shownIncYears.map((y) => incLong[key][y] ?? 0),
+          backgroundColor: cssVar(colorVar),
+        })),
+      },
+      options: baseBarOptions({ yTitle: "Incidents de 5 min et plus", tooltipDecimals: 0 }),
+    });
+  };
+  buildInc();
+  registerRedraw(buildInc);
+
+  // --- causes ---
+  const causes = metro.causes_5min_plus;
+  const totalCauses = causes.rows.reduce((a, r) => a + r.n, 0);
+  const topCauses = causes.rows.slice(0, 7);
+  document.getElementById("caption-metro-causes").textContent =
+    `Causes des ${fmtInt.format(totalCauses)} incidents de 5 minutes et plus survenus de ${causes.annees[0]} à ${causes.annees[causes.annees.length - 1]}, en % du total.`;
+  const ctxCauses = document.getElementById("chart-metro-causes");
+  let chartCauses;
+  const buildCauses = () => {
+    if (chartCauses) chartCauses.destroy();
+    chartCauses = new Chart(ctxCauses, {
+      type: "bar",
+      data: {
+        labels: topCauses.map((r) => {
+          const label = CAUSE_LABELS[r.cause] || r.cause;
+          return isNarrow() ? boroughLabel(label, 16) : label;
+        }),
+        datasets: [{
+          label: "Part des incidents",
+          data: topCauses.map((r) => (100 * r.n) / totalCauses),
+          backgroundColor: topCauses.map((r) => cssVar(r.cause.startsWith("Matériel roulant") ? "--series-auto" : "--series-7")),
+          borderRadius: 3,
+        }],
+      },
+      options: {
+        ...baseBarOptions({ indexAxis: "y", tooltipSuffix: " %", tooltipDecimals: 1 }),
+        plugins: { ...baseBarOptions({}).plugins, legend: { display: false } },
+      },
+    });
+  };
+  buildCauses();
+  registerRedraw(buildCauses);
+
+  const mefait = causes.rows.find((r) => r.cause === "Méfait volontaire");
+  fillStrip("stat-metro-incidents", [
+    mefait && stat(`${Math.round((100 * mefait.n) / totalCauses)} %`, `des arrêts de 5 min et plus (${causes.annees[0]}–${causes.annees[causes.annees.length - 1]}) viennent d'un méfait volontaire — première cause, devant toutes les pannes techniques`, "--series-7"),
+    stat(fmtInt.format(metro.incidents_30min_plus[lastIncFull]), `interruptions de 30 minutes et plus en ${lastIncFull} (${fmtInt.format(metro.incidents_30min_plus[String(parseInt(lastIncFull, 10) - 1)])} l'année précédente)`, "--series-8"),
+    stat(fmtInt.format(metro.evacuations[lastIncFull]), `évacuations de train ou de station en ${lastIncFull}, soit environ ${Math.round(metro.evacuations[lastIncFull] / 52)} par semaine`, "--series-8"),
+    stat(fmtInt.format(metro.urgences_metro[lastIncFull]), `déclenchements du bouton d'urgence métro en ${lastIncFull}`, "--series-autre"),
+  ]);
+
+  // --- REM ---
+  const gtfsDate = rem.gtfs_debut ? `${rem.gtfs_debut.slice(0, 4)}-${rem.gtfs_debut.slice(4, 6)}-${rem.gtfs_debut.slice(6)}` : null;
+  if (gtfsDate) document.getElementById("caption-rem").textContent =
+    `Offre planifiée pour un jour de semaine type, calculée à partir du GTFS publié par le REM (horaire en vigueur depuis le ${gtfsDate}).`;
+  const longest = [...rem.services].sort((a, b) => b.longueur_km - a.longueur_km)[0];
+  fillStrip("stat-rem", [
+    stat(fmtInt.format(rem.stations), "stations en service", "--series-actif"),
+    stat(fmtInt.format(rem.departs_jour_semaine), "départs de train par jour de semaine", "--series-actif"),
+    stat(`${fmtInt.format(rem.km_train_jour_semaine)} km`, "km-train planifiés par jour de semaine", "--series-actif"),
+    longest && stat(`${fmtDec1.format(longest.longueur_km)} km`, `trajet le plus long sans correspondance : ${longest.nom.replace(/^A\d - /, "").replace(" / A1 - ", " ↔ ")}`, "--series-actif"),
+  ]);
+  const metroTrainKm = metro.km_train_par_jour_semaine[lastFull];
+  document.getElementById("callout-rem").innerHTML =
+    `<strong>Mise en perspective :</strong> l'ensemble du métro roule environ ${fmtInt.format(metroTrainKm)} km-train par jour de semaine (${lastFull}). ` +
+    `Le REM en planifie déjà ${fmtInt.format(rem.km_train_jour_semaine)}, soit ${Math.round((100 * rem.km_train_jour_semaine) / metroTrainKm)} % du kilométrage-train du métro — ` +
+    `avec des trains beaucoup plus courts (2 ou 4 voitures, contre 9 au métro). Le REM ne publie toujours pas son achalandage dans le catalogue ouvert : ` +
+    `on connaît précisément l'offre, pas l'usage.`;
+
+  // --- ventes de titres ---
+  const vYears = Object.keys(ventes.quantite.Mensuel).sort();
+  const vLast = vYears[vYears.length - 1];
+  const vPrev = String(parseInt(vLast, 10) - 1);
+  const [, mm, dd] = ventes.derniere_date.split("-");
+  const periodLabel = `1er janv.–${parseInt(dd, 10)} ${moisAbr(parseInt(mm, 10))}`;
+  document.getElementById("caption-ventes").textContent =
+    `Ventes nettes de titres ARTM, en millions de titres, du 1er janvier au ${parseInt(dd, 10)} ${moisAbr(parseInt(mm, 10))} de chaque année (comparaison à période égale).`;
+  const q = ventes.quantite;
+  const pct = (a, b) => (100 * (a - b)) / b;
+  const totalMontant = (y) => Object.values(ventes.montant).reduce((a, s) => a + (s[y] || 0), 0);
+  const signed = (v) => `${v >= 0 ? "+" : ""}${Math.round(v)} %`;
+  fillStrip("stat-ventes", [
+    stat(signed(pct(q.Mensuel[vLast], q.Mensuel["2019"])), `passes mensuelles vendues, ${vLast} vs 2019 (${periodLabel})`, "--series-tc"),
+    stat(signed(pct(q["Billet unitaire"][vLast], q["Billet unitaire"]["2019"])), `billets unitaires vendus, ${vLast} vs 2019`, "--series-auto"),
+    stat(`${fmtInt.format(Math.round(totalMontant(vLast) / 1e6))} M$`, `de ventes nettes en ${vLast} (${periodLabel}), contre ${fmtInt.format(Math.round(totalMontant("2019") / 1e6))} M$ en 2019 — en dollars courants`, "--series-actif"),
+  ]);
+  const vTypes = ["Billet unitaire", "Mensuel", "Horaire/Journalier/Hebdo", "Multi-passages", "Abonnement"];
+  const vShown = ["2019", vPrev, vLast];
+  const vColors = ["--series-autre", "--series-7", "--series-tc"];
+  const ctxVentes = document.getElementById("chart-ventes");
+  let chartVentes;
+  const buildVentes = () => {
+    if (chartVentes) chartVentes.destroy();
+    chartVentes = new Chart(ctxVentes, {
+      type: "bar",
+      data: {
+        labels: vTypes.map((t) => (isNarrow() ? boroughLabel(t.replace(/\//g, " / "), 14) : t)),
+        datasets: vShown.map((y, i) => ({ label: y, data: vTypes.map((t) => M(q[t][y] || 0)), backgroundColor: cssVar(vColors[i]) })),
+      },
+      options: baseBarOptions({ indexAxis: "y", yTitle: "Millions de titres vendus", tooltipSuffix: " M", tooltipDecimals: 2 }),
+    });
+  };
+  buildVentes();
+  registerRedraw(buildVentes);
+  renderTable(
+    "table-ventes",
+    ["Type de titre", ...vYears],
+    Object.keys(q).map((t) => [t, ...vYears.map((y) => fmtInt.format(q[t][y] || 0))])
+  );
+}
+
+/* ===========================================================================
+   2c) Vélo terrain : compteurs permanents (Ville de Montréal) + historique BIXI
+   =========================================================================== */
+
+const MOIS_LABELS = MOIS_COURTS.map((m) => m.charAt(0).toUpperCase() + m.slice(1));
+
+function initCompteurs(d, meta) {
+  const src = meta.sources.find((s) => s.label === "compteurs-velo");
+  if (src) document.getElementById("velo-updated").textContent = `Sources : Ville de Montréal, BIXI · rafraîchi le ${new Date(src.fetched_at).toLocaleDateString("fr-CA")}`;
+
+  const ref = d.annee_reference;
+  const top = d.top_sites[0];
+  const rec = d.record_jour;
+  const [, rm, rd] = rec.date.split("-");
+  fillStrip("stat-compteurs", [
+    stat(fmtInt.format(top.moyenne_jour), `vélos par jour en moyenne en ${ref} au compteur le plus achalandé de Montréal : ${top.nom}`, "--series-actif"),
+    stat(fmtInt.format(rec.passages), `vélos en une seule journée (${parseInt(rd, 10)} ${moisAbr(parseInt(rm, 10))} ${rec.date.slice(0, 4)}), au même compteur — le record de l'année`, "--series-actif"),
+    stat(`${fmtDec1.format(d.part_hiver_pct)} %`, `des passages de l'année ont lieu de décembre à mars (${ref}) : le vélo d'hiver existe, mais reste marginal`, "--series-tc"),
+  ]);
+
+  document.getElementById("caption-compteurs-top").textContent =
+    `Passages en ${ref} aux ${d.top_sites.length} compteurs les plus fréquentés, parmi les ${d.compteurs_actifs_reference} actifs toute l'année. Certains axes ont un compteur par sens.`;
+  const ctxTop = document.getElementById("chart-compteurs-top");
+  let chartTop;
+  const buildTop = () => {
+    if (chartTop) chartTop.destroy();
+    chartTop = new Chart(ctxTop, {
+      type: "bar",
+      data: {
+        labels: d.top_sites.map((s) => {
+          if (!isNarrow()) return s.nom;
+          const court = s.nom.replace(/ dir nord$/, " (N)").replace(/ dir sud$/, " (S)").replace(/ SB$/, " (S)").replace(/^Eco-Display - /, "");
+          return boroughLabel(court, 20);
+        }),
+        datasets: [{
+          label: "Passages par jour (moyenne)",
+          data: d.top_sites.map((s) => s.moyenne_jour),
+          backgroundColor: d.top_sites.map((s) => cssVar(s.nom.startsWith("REV") ? "--series-actif" : "--series-autre")),
+          borderRadius: 3,
+        }],
+      },
+      options: {
+        ...baseBarOptions({ indexAxis: "y", yTitle: `Vélos par jour, moyenne ${ref}`, tooltipDecimals: 0 }),
+        plugins: { ...baseBarOptions({}).plugins, legend: { display: false } },
+      },
+    });
+  };
+  buildTop();
+  registerRedraw(buildTop);
+
+  document.getElementById("caption-compteurs-saison").textContent =
+    `Passages mensuels en ${ref}, somme des ${d.compteurs_actifs_reference} compteurs actifs toute l'année.`;
+  const months = Object.keys(d.saisonnalite).sort();
+  const ctxSaison = document.getElementById("chart-compteurs-saison");
+  let chartSaison;
+  const buildSaison = () => {
+    if (chartSaison) chartSaison.destroy();
+    chartSaison = new Chart(ctxSaison, {
+      type: "bar",
+      data: {
+        labels: months.map((m) => MOIS_LABELS[parseInt(m, 10) - 1]),
+        datasets: [{
+          label: "Passages",
+          data: months.map((m) => d.saisonnalite[m] / 1e6),
+          backgroundColor: months.map((m) => cssVar(["12", "01", "02", "03"].includes(m) ? "--series-tc" : "--series-actif")),
+          borderRadius: 3,
+        }],
+      },
+      options: {
+        ...baseBarOptions({ yTitle: "Millions de passages", tooltipSuffix: " M", tooltipDecimals: 2 }),
+        plugins: { ...baseBarOptions({}).plugins, legend: { display: false } },
+      },
+    });
+  };
+  buildSaison();
+  registerRedraw(buildSaison);
+
+  // Comparaisons à compteurs identiques : on affiche chaque variation avec
+  // le nombre de compteurs sur lequel elle repose, pour juger de sa solidité.
+  const parts = d.comparaisons.filter((c) => c.variation_pct != null).map((c) => {
+    const periode = c.mois[0] === 1 && c.mois[1] === 12 ? "année complète" : `janv.–${moisAbr(c.mois[1])}`;
+    return `<strong>${c.variation_pct >= 0 ? "+" : ""}${fmtDec1.format(c.variation_pct)} %</strong> de ${c.de} à ${c.a} (${periode}, ${c.compteurs} compteurs)`;
+  });
+  document.getElementById("callout-compteurs").innerHTML =
+    `<strong>Évolution à compteurs identiques :</strong> ${parts.join(" ; ")}. ` +
+    `Seuls les compteurs ayant des données au moins 90 % des jours sur les deux périodes sont comparés, et ceux qui varient de plus de ` +
+    `${d.seuil_exclusion_pct} % sont écartés (compteur déplacé, en panne ou piste réaménagée). Ces comptages restent très sensibles à la météo ` +
+    `et aux chantiers : une baisse d'une année à l'autre ne signifie pas forcément moins de cyclistes dans toute la ville.`;
+}
+
+function initBixiHistorique(d) {
+  const years = Object.keys(d.par_annee).sort();
+  const lastYear = years[years.length - 1];
+  const [dy, dm] = d.dernier_mois.split("-");
+  const full = years.filter((y) => y !== dy || dm === "12");
+  const ref = full[full.length - 1];
+  const r = d.par_annee[ref];
+  const cumul = d.cumul_meme_periode.par_annee;
+  const prev = String(parseInt(dy, 10) - 1);
+  const ytdDelta = cumul[prev] ? (100 * (cumul[dy] - cumul[prev])) / cumul[prev] : null;
+  const vs2019 = d.par_annee["2019"] ? (100 * (r.trajets - d.par_annee["2019"].trajets)) / d.par_annee["2019"].trajets : null;
+
+  document.getElementById("intro-bixi-hist").textContent =
+    `Historique ouvert des déplacements BIXI (${years[0]}–${lastYear}, jusqu'en ${moisAbr(parseInt(dm, 10))} ${dy}), calculé par ce site trajet par trajet. Les distances sont mesurées en ligne droite entre stations : c'est un minimum, le trajet réel est plus long.`;
+  const [, recM, recD] = r.jour_record.date.split("-");
+  fillStrip("stat-bixi-hist", [
+    stat(`${fmtDec1.format(r.trajets / 1e6)} M`, `trajets BIXI en ${ref}${vs2019 != null ? `, soit ${vs2019 >= 0 ? "+" : ""}${Math.round(vs2019)} % par rapport à 2019 (saison avril–octobre seulement à l\'époque)` : ""}`, "--series-actif"),
+    ytdDelta != null && stat(`${ytdDelta >= 0 ? "+" : ""}${fmtDec1.format(ytdDelta)} %`, `trajets de janvier à ${moisAbr(parseInt(dm, 10))} ${dy} vs même période ${prev}`, "--series-actif"),
+    stat(`${fmtDec1.format(r.km_vol_oiseau / 1e6)} M km`, `parcourus au minimum en ${ref} (ligne droite entre stations) — environ ${fmtInt.format(Math.round(r.km_vol_oiseau / 40075))} fois le tour de la Terre`, "--series-tc"),
+    stat(`${r.duree_mediane_min} min`, `durée médiane d'un trajet en ${ref}`, "--series-tc"),
+    stat(fmtInt.format(r.jour_record.trajets), `trajets le ${parseInt(recD, 10)} ${moisAbr(parseInt(recM, 10))} ${ref}, journée record de l'année (moyenne : ${fmtInt.format(r.moyenne_jour_semaine)} en semaine, ${fmtInt.format(r.moyenne_jour_fin_semaine)} la fin de semaine)`, "--series-scolaire"),
+  ]);
+
+  // --- trajets par mois, une ligne par année ---
+  const colors = { "2019": "--series-autre", "2023": "--series-scolaire", "2024": "--series-7", "2025": "--series-actif", "2026": "--series-tc" };
+  const ctxM = document.getElementById("chart-bixi-mois");
+  let chartM;
+  const buildM = () => {
+    if (chartM) chartM.destroy();
+    chartM = new Chart(ctxM, {
+      type: "line",
+      data: {
+        labels: MOIS_LABELS,
+        datasets: years.map((y) => ({
+          label: y,
+          data: MOIS_LABELS.map((_, i) => {
+            const v = d.par_annee[y].par_mois[String(i + 1).padStart(2, "0")];
+            return v != null ? v / 1e6 : null;
+          }),
+          borderColor: cssVar(colors[y] || "--series-8"),
+          backgroundColor: cssVar(colors[y] || "--series-8"),
+          borderWidth: y === lastYear ? 2.5 : 1.5,
+          pointRadius: 2,
+          tension: 0.2,
+        })),
+      },
+      options: baseLineOptions({ yTitle: "Millions de trajets", beginAtZero: true, tooltipSuffix: " M", tooltipDecimals: 2 }),
+    });
+  };
+  buildM();
+  registerRedraw(buildM);
+  renderTable(
+    "table-bixi-mois",
+    ["Mois", ...years],
+    MOIS_LABELS.map((label, i) => [label, ...years.map((y) => {
+      const v = d.par_annee[y].par_mois[String(i + 1).padStart(2, "0")];
+      return v != null ? fmtInt.format(v) : "—";
+    })])
+  );
+
+  // --- heures ---
+  document.getElementById("caption-bixi-heures").textContent = `Part des trajets selon l'heure de départ, ${ref}. Deux pointes, comme le transport collectif — mais celle du soir domine.`;
+  const totalH = r.par_heure.reduce((a, b) => a + b, 0);
+  const ctxH = document.getElementById("chart-bixi-heures");
+  let chartH;
+  const buildH = () => {
+    if (chartH) chartH.destroy();
+    chartH = new Chart(ctxH, {
+      type: "bar",
+      data: {
+        labels: r.par_heure.map((_, h) => `${h} h`),
+        datasets: [{ label: "Part des trajets", data: r.par_heure.map((n) => (100 * n) / totalH), backgroundColor: cssVar("--series-actif"), borderRadius: 2 }],
+      },
+      options: {
+        ...baseBarOptions({ yTitle: "% des trajets", tooltipSuffix: " %", tooltipDecimals: 1 }),
+        plugins: { ...baseBarOptions({}).plugins, legend: { display: false } },
+      },
+    });
+  };
+  buildH();
+  registerRedraw(buildH);
+
+  // --- stations ---
+  const st = r.top_stations_depart.slice(0, 8);
+  document.getElementById("caption-bixi-stations").textContent = `Trajets au départ de chaque station, ${ref}.`;
+  const ctxS = document.getElementById("chart-bixi-stations");
+  let chartS;
+  const buildS = () => {
+    if (chartS) chartS.destroy();
+    chartS = new Chart(ctxS, {
+      type: "bar",
+      data: {
+        labels: st.map((s) => {
+          const nom = isNarrow() ? s.nom.replace(/\s*\(.*\)$/, "") : s.nom;
+          return isNarrow() ? boroughLabel(nom, 18) : nom;
+        }),
+        datasets: [{ label: "Trajets", data: st.map((s) => s.trajets), backgroundColor: cssVar("--series-actif"), borderRadius: 3 }],
+      },
+      options: {
+        ...baseBarOptions({ indexAxis: "y", yTitle: "Trajets au départ", tooltipDecimals: 0 }),
+        plugins: { ...baseBarOptions({}).plugins, legend: { display: false } },
+      },
+    });
+  };
+  buildS();
+  registerRedraw(buildS);
+}
+
+function initCampus(d) {
+  const e = d.etudiants, p = d.employes;
+  document.getElementById("caption-campus").textContent =
+    `Volet distinct de Perspectives mobilité, mené en ${d.periode_collecte} auprès des étudiant·e·s et employé·e·s de ${d.institutions.join(", ")} ` +
+    `(${fmtInt.format(d.reponses_completes)} réponses complètes, résultats pondérés). Une journée de navettage typique, domicile → campus.`;
+  fillStrip("stat-campus-etudiants", [
+    stat(`${e.part_tc_pct} %`, "viennent principalement en transport collectif", "--series-tc"),
+    stat(`${fmtDec1.format(e.jours_campus_par_semaine)} j`, "au campus par semaine, en moyenne", "--series-autre"),
+    stat(`${fmtDec1.format(e.distance_mediane_km)} km`, "distance médiane domicile–campus (sur le réseau)", "--series-autre"),
+  ]);
+  fillStrip("stat-campus-employes", [
+    stat(`${p.part_tc_pct} %`, `en transport collectif, et ${p.part_auto_pct} % en voiture`, "--series-tc"),
+    stat(`${fmtDec1.format(p.jours_campus_par_semaine)} j`, `au campus par semaine ; ${p.temps_plein_jours_en_teletravail_pct} % des jours travaillés à temps plein le sont en télétravail`, "--series-autre"),
+    stat(`${fmtDec1.format(p.distance_mediane_km)} km`, "distance médiane domicile–campus (sur le réseau)", "--series-autre"),
+  ]);
+  const c = d.conducteurs_ouverts_a_un_mode_durable;
+  document.getElementById("callout-campus").innerHTML =
+    `<strong>Auto solo :</strong> parmi les personnes qui vont au campus en voiture, ${fmtDec1.format(e.part_auto_solo_parmi_auto_pct)} % des étudiant·e·s ` +
+    `et ${fmtDec1.format(p.part_auto_solo_parmi_auto_pct)} % des employé·e·s conduisent seul·e·s. Interrogé·e·s, environ ` +
+    `<strong>${Math.round((100 * c.ouverts_ponderes) / c.conducteurs_ponderes)} %</strong> des conducteur·rice·s se disent prêt·e·s à envisager un mode durable. ` +
+    `Source : <a href="${d.rapport_pdf}" target="_blank" rel="noopener">rapport global ARTM, juin 2026 (PDF)</a> — chiffres reportés à la main.`;
 }
 
 /* ===========================================================================
@@ -829,7 +1366,7 @@ async function initMap() {
     "Terminus métropolitains": terminusLayer,
     "Stationnements incitatifs": parkLayer,
     "Zones tarifaires": zonesLayer,
-  }, { collapsed: false }).addTo(map);
+  }, { collapsed: isNarrow() }).addTo(map);
 
   const legend = document.getElementById("map-legend");
   legend.innerHTML = "";
@@ -985,7 +1522,7 @@ function baseLineOptions({ yTitle, yMax, beginAtZero, tooltipIsInt, tooltipPrefi
       },
     },
     scales: {
-      x: { ticks: { color: cssVar("--text-muted"), maxRotation: 0, autoSkip: true, font: { size: 11 } }, grid: { display: false }, border: { color: cssVar("--baseline") } },
+      x: { ticks: { color: cssVar("--text-muted"), maxRotation: 0, autoSkip: true, autoSkipPadding: 12, maxTicksLimit: isNarrow() ? 5 : undefined, font: { size: 11 } }, grid: { display: false }, border: { color: cssVar("--baseline") } },
       y: { max: yMax, beginAtZero: !!beginAtZero, title: { display: !!yTitle, text: yTitle, color: cssVar("--text-muted"), font: { size: 11.5 } }, ticks: { color: cssVar("--text-muted"), font: { size: 11 } }, grid: { color: cssVar("--gridline") }, border: { display: false } },
     },
   };
@@ -1019,7 +1556,7 @@ function baseBarOptions({ yTitle, yMax, stacked, tooltipSuffix = "", tooltipDeci
       },
     },
     scales: {
-      [categoryKey]: { stacked: !!stacked, ticks: { color: cssVar("--text-muted"), font: { size: 11 } }, grid: { display: false }, border: { color: cssVar("--baseline") } },
+      [categoryKey]: { stacked: !!stacked, ticks: { color: cssVar("--text-muted"), autoSkip: indexAxis !== "y", font: { size: isNarrow() ? 10 : 11 } }, grid: { display: false }, border: { color: cssVar("--baseline") } },
       [valueKey]: { stacked: !!stacked, max: yMax, title: { display: !!yTitle, text: yTitle, color: cssVar("--text-muted"), font: { size: 11.5 } }, ticks: { color: cssVar("--text-muted"), font: { size: 11 } }, grid: { color: cssVar("--gridline") }, border: { display: false } },
     },
   };
@@ -1050,6 +1587,25 @@ async function boot() {
   initModeSecteurs("marche", modesSecteurs.marche, { colorVar: "--series-5", unitLabel: "marche" });
   initModeSecteurs("actif", modesSecteurs.actif, { colorVar: "--series-actif", unitLabel: "transport actif" });
   const achalandageSummary = await initAchalandage(achalandage, meta);
+  try {
+    const [metro, rem, ventes] = await Promise.all([
+      fetchJSON("data/metro_stm.json"),
+      fetchJSON("data/rem.json"),
+      fetchJSON("data/ventes_titres.json"),
+    ]);
+    initReseau(metro, rem, ventes, meta);
+  } catch (e) {
+    // Section facultative : une source manquante ne doit pas bloquer le reste du tableau de bord.
+    console.warn("Section réseau indisponible:", e);
+  }
+  // Sections facultatives, chacune indépendante : une source manquante ne bloque pas les autres.
+  const optional = [
+    ["data/enseignement_superieur_2025.json", initCampus],
+    ["data/compteurs_velo.json", (d) => initCompteurs(d, meta)],
+    ["data/bixi_historique.json", initBixiHistorique],
+  ];
+  await Promise.all(optional.map(([path, fn]) =>
+    fetchJSON(path).then(fn).catch((e) => console.warn(`${path} indisponible:`, e))));
   await initTarifs(meta);
   renderParcAuto(partsModales, achalandageSummary);
 
