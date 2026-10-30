@@ -190,6 +190,12 @@ nav.main-nav a:hover { background: var(--surface-2); color: var(--text-primary);
   margin: 0 0 28px;
 }
 .hero .lede strong { color: var(--text-primary); }
+.hero .byline {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: -14px 0 24px;
+}
+.hero .byline a { color: var(--text-secondary); font-weight: 600; }
 
 .kpi-grid {
   display: grid;
