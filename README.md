@@ -44,7 +44,9 @@ retire automatiquement — le remettre suffit à relier le domaine de nouveau.
 
 ```
 index.html              page unique, sections ancrées
-css/style.css            palette, mise en page
+css/style.css            mise en page, composants, couleurs des séries
+css/hybride.css          habillage « dashboard détaillé » (Inter, accent vert, verre léger, mode sombre)
+confidentialite.html      politique de confidentialité
 js/main.js                tout le rendu (graphiques Chart.js, carte Leaflet, BIXI en direct)
 data/*.json, *.geojson    données générées par le robot (committées dans le dépôt)
 scripts/update_data.py    pipeline de mise à jour — aucune dépendance externe (stdlib Python uniquement)
@@ -104,3 +106,11 @@ notamment : l'achalandage du REM n'est pas publié publiquement par l'ARTM
 réseau cyclable détaillé ne couvre que l'agglomération de Montréal ; les
 validations de titres quotidiennes ne sont pas distribuées en fichier
 téléchargeable.
+
+## Confidentialité
+
+Aucun cookie ni compte. Les visites sont comptées de façon anonyme avec
+[GoatCounter](https://www.goatcounter.com) ; rien n'est enregistré dans le
+navigateur (le thème clair/sombre suit simplement l'appareil). Détails :
+[confidentialite.html](confidentialite.html), à mettre à jour (avec sa date)
+si un service externe est ajouté.

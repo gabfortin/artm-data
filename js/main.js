@@ -4,9 +4,24 @@
    Utilitaires généraux
    =========================================================================== */
 
-const fmtInt = new Intl.NumberFormat("fr-CA");
-const fmtDec1 = new Intl.NumberFormat("fr-CA", { maximumFractionDigits: 1, minimumFractionDigits: 1 });
-const fmtMoney = new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" });
+/* Nombres à la française : virgule décimale, espace insécable pour les
+   milliers, vrai signe moins « − » (U+2212) plutôt que le trait d'union. */
+function minus(str) {
+  return String(str).replace(/(^|[\s(\u00a0\u202f→])-(?=\d)/g, "$1\u2212");
+}
+function frFormatter(options) {
+  const f = new Intl.NumberFormat("fr-CA", options);
+  return { format: (v) => minus(f.format(v)) };
+}
+/* Remplace n.toFixed(d) pour l'affichage : « 14,78 » et non « 14.78 ». */
+function fr(n, d = 0) {
+  return minus(Number(n).toLocaleString("fr-CA", { minimumFractionDigits: d, maximumFractionDigits: d }));
+}
+const fmtInt = frFormatter();
+const fmtDec1 = frFormatter({ maximumFractionDigits: 1, minimumFractionDigits: 1 });
+const fmtMoney = frFormatter({ style: "currency", currency: "CAD" });
+/* Graduations et infobulles des graphiques en français (« 1 000 », « 0,5 »). */
+if (window.Chart) Chart.defaults.locale = "fr-CA";
 
 async function fetchJSON(path) {
   const res = await fetch(path, { cache: "no-cache" });
@@ -27,7 +42,7 @@ function el(tag, attrs = {}, children = []) {
   }
   for (const c of [].concat(children)) {
     if (c == null) continue;
-    node.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+    node.appendChild(typeof c === "string" ? document.createTextNode(minus(c)) : c);
   }
   return node;
 }
@@ -60,21 +75,54 @@ function boroughLabel(name, maxLen = 22) {
 const redrawCallbacks = [];
 function registerRedraw(fn) { redrawCallbacks.push(fn); }
 
-function initTheme() {
-  const btn = document.getElementById("theme-toggle");
-  let saved = null;
-  try { saved = localStorage.getItem("theme"); } catch (e) { /* storage blocked — ignore */ }
-  if (saved === "light" || saved === "dark") {
-    document.documentElement.setAttribute("data-theme", saved);
+/* Menu qui suit la lecture + lien direct vers chaque section */
+function initNavEnhancements() {
+  const links = new Map();
+  document.querySelectorAll('nav.main-nav a[href^="#"]').forEach((a) => links.set(a.getAttribute("href").slice(1), a));
+  const sections = [...document.querySelectorAll("section.panel[id]")].filter((sec) => links.has(sec.id));
+  if ("IntersectionObserver" in window && sections.length) {
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        links.forEach((a) => a.removeAttribute("aria-current"));
+        links.get(e.target.id).setAttribute("aria-current", "location");
+      }
+    }, { rootMargin: "-40% 0px -55% 0px" });
+    sections.forEach((sec) => io.observe(sec));
   }
-  btn.addEventListener("click", () => {
-    const current = document.documentElement.getAttribute("data-theme") ||
-      (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    const next = current === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    try { localStorage.setItem("theme", next); } catch (e) { /* ignore */ }
-    for (const fn of redrawCallbacks) fn();
+
+  const live = el("p", { class: "sr-only", "aria-live": "polite" });
+  document.body.appendChild(live);
+  document.querySelectorAll("section.panel[id] .section-head h2").forEach((h2) => {
+    const id = h2.closest("section.panel").id;
+    const btn = el("button", { type: "button", class: "anchor-link", title: "Copier le lien vers cette section", "aria-label": `Copier le lien vers la section « ${h2.textContent.trim()} »` }, "#");
+    btn.addEventListener("click", () => {
+      const url = `${location.origin}${location.pathname}#${id}`;
+      history.replaceState(null, "", `#${id}`);
+      const done = () => {
+        btn.textContent = "Lien copié";
+        btn.classList.add("copied");
+        live.textContent = "Lien copié";
+        setTimeout(() => { btn.textContent = "#"; btn.classList.remove("copied"); live.textContent = ""; }, 1800);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, done);
+      else done();
+    });
+    h2.appendChild(btn);
   });
+}
+
+function initTheme() {
+  // Le thème suit l'appareil (prefers-color-scheme), sans bouton : les
+  // graphiques lisent leurs couleurs dans le CSS, on les redessine si
+  // l'appareil change de thème pendant la visite.
+  const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  const redraw = () => { for (const fn of redrawCallbacks) fn(); };
+  if (darkQuery.addEventListener) darkQuery.addEventListener("change", redraw);
+  else if (darkQuery.addListener) darkQuery.addListener(redraw);
+  // Impression : toujours en clair (papier blanc), graphiques redessinés.
+  window.addEventListener("beforeprint", () => { document.documentElement.classList.add("print-light"); redraw(); });
+  window.addEventListener("afterprint", () => { document.documentElement.classList.remove("print-light"); redraw(); });
   // Les étiquettes et graduations dépendent de la largeur : on redessine au
   // passage du seuil mobile (rotation d'un téléphone, redimensionnement).
   narrowQuery.addEventListener("change", () => { for (const fn of redrawCallbacks) fn(); });
@@ -163,11 +211,11 @@ async function initPartsModales(d) {
   const headers = ["Année", "Auto %", "TC %", "Actif %", "Scolaire %", "Autre %", "Déplacements (pointe AM)"];
   const tableRows = rows.map((r, i) => [
     r.annee,
-    series.auto[i].toFixed(1),
-    series.tc[i].toFixed(1),
-    series.actif[i].toFixed(1),
-    series.scolaire[i].toFixed(1),
-    series.autre[i].toFixed(1),
+    fr(series.auto[i], 1),
+    fr(series.tc[i], 1),
+    fr(series.actif[i], 1),
+    fr(series.scolaire[i], 1),
+    fr(series.autre[i], 1),
     fmtInt.format(r.deplacements_total),
   ]);
   renderTable("table-parts-modales", headers, tableRows);
@@ -185,7 +233,7 @@ async function initPartsModales(d) {
   for (const [label, arr, colorVar] of modeDeltas) {
     const delta = arr[arr.length - 1] - arr[0];
     deltaStrip.appendChild(el("div", { class: "stat", style: `border-left-color:${cssVar(colorVar)}` }, [
-      el("div", { class: "stat-value" }, `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pts`),
+      el("div", { class: "stat-value" }, `${delta >= 0 ? "+" : ""}${fr(delta, 1)} pts`),
       el("div", { class: "stat-label" }, `${label} (${firstYear} → ${lastYear})`),
     ]));
   }
@@ -271,15 +319,15 @@ function renderCentralAggregateStat(containerId, agg, modeLabel) {
   if (!stat) return;
   stat.innerHTML = "";
   stat.appendChild(el("div", { class: "stat" }, [
-    el("div", { class: "stat-value" }, `${agg.p18.toFixed(2)} % → ${agg.p23.toFixed(2)} %`),
+    el("div", { class: "stat-value" }, `${fr(agg.p18, 2)} % → ${fr(agg.p23, 2)} %`),
     el("div", { class: "stat-label" }, `Moyenne pondérée, arrondissements centraux (Plateau, Rosemont–La Petite-Patrie, Villeray–Saint-Michel–Parc-Extension, Ville-Marie) — ${modeLabel}, 2018→2023`),
   ]));
   stat.appendChild(el("div", { class: "stat" }, [
-    el("div", { class: "stat-value" }, `${agg.ptsDelta >= 0 ? "+" : ""}${agg.ptsDelta.toFixed(2)} pts`),
+    el("div", { class: "stat-value" }, `${agg.ptsDelta >= 0 ? "+" : ""}${fr(agg.ptsDelta, 2)} pts`),
     el("div", { class: "stat-label" }, "points de pourcentage gagnés sur cette base"),
   ]));
   stat.appendChild(el("div", { class: "stat" }, [
-    el("div", { class: "stat-value" }, `${agg.relGrowthPct >= 0 ? "+" : ""}${agg.relGrowthPct.toFixed(0)} %`),
+    el("div", { class: "stat-value" }, `${agg.relGrowthPct >= 0 ? "+" : ""}${fr(agg.relGrowthPct, 0)} %`),
     el("div", { class: "stat-label" }, "croissance relative"),
   ]));
 }
@@ -295,14 +343,14 @@ async function initVeloSecteurs(d) {
   highlights.innerHTML = "";
   if (plateau && plateau.part_velo_2023_pct != null) {
     highlights.appendChild(el("div", { class: "stat" }, [
-      el("div", { class: "stat-value" }, `${plateau.part_velo_2023_pct.toFixed(2)}\u00a0%`),
-      el("div", { class: "stat-label" }, `Le Plateau-Mont-Royal, 2023 \u2014 la part v\u00e9lo y a presque doubl\u00e9 depuis 2018 (${plateau.part_velo_2018_pct.toFixed(2)}\u00a0%), pour approcher 15\u00a0% de tous les d\u00e9placements`),
+      el("div", { class: "stat-value" }, `${fr(plateau.part_velo_2023_pct, 2)}\u00a0%`),
+      el("div", { class: "stat-label" }, `Le Plateau-Mont-Royal, 2023 \u2014 la part v\u00e9lo y a presque doubl\u00e9 depuis 2018 (${fr(plateau.part_velo_2018_pct, 2)}\u00a0%), pour approcher 15\u00a0% de tous les d\u00e9placements`),
     ]));
   }
   if (top23) {
     const shortName = (top23.nom_secteur || "").replace(/^Montr\u00e9al\s*:\s*/, "");
     highlights.appendChild(el("div", { class: "stat" }, [
-      el("div", { class: "stat-value" }, `${top23.part_velo_pct.toFixed(2)}\u00a0%`),
+      el("div", { class: "stat-value" }, `${fr(top23.part_velo_pct, 2)}\u00a0%`),
       el("div", { class: "stat-label" }, `Secteur avec la part v\u00e9lo la plus \u00e9lev\u00e9e de Montr\u00e9al, 2023 \u2014 ${shortName} (${fmtInt.format(top23.observations_brutes)} observations, seuil de fiabilit\u00e9 ARTM largement d\u00e9pass\u00e9)`),
     ]));
   }
@@ -310,15 +358,15 @@ async function initVeloSecteurs(d) {
   const stat = document.getElementById("stat-velo-centraux");
   stat.innerHTML = "";
   stat.appendChild(el("div", { class: "stat" }, [
-    el("div", { class: "stat-value" }, `+${agg.relGrowthPct.toFixed(0)} %`),
+    el("div", { class: "stat-value" }, `+${fr(agg.relGrowthPct, 0)} %`),
     el("div", { class: "stat-label" }, "croissance relative de la part vélo, 4 arrondissements centraux, 2018→2023"),
   ]));
   stat.appendChild(el("div", { class: "stat" }, [
-    el("div", { class: "stat-value" }, `${agg.p18.toFixed(2)} % → ${agg.p23.toFixed(2)} %`),
+    el("div", { class: "stat-value" }, `${fr(agg.p18, 2)} % → ${fr(agg.p23, 2)} %`),
     el("div", { class: "stat-label" }, "part vélo agrégée (pondérée par les déplacements), Plateau + Rosemont–La Petite-Patrie + Villeray–Saint-Michel–Parc-Extension + Ville-Marie"),
   ]));
   stat.appendChild(el("div", { class: "stat" }, [
-    el("div", { class: "stat-value" }, `+${agg.ptsDelta.toFixed(2)} pts`),
+    el("div", { class: "stat-value" }, `+${fr(agg.ptsDelta, 2)} pts`),
     el("div", { class: "stat-label" }, "points de pourcentage gagnés sur la même base"),
   ]));
 
@@ -349,10 +397,10 @@ async function initVeloSecteurs(d) {
       ["Arrondissement", "Part vélo 2018", "Part vélo 2023", "Variation (pts)"],
       rows.map((r) => [
         r.arrondissement,
-        r.part_velo_2018_pct != null ? `${r.part_velo_2018_pct.toFixed(2)} %` : "—",
-        r.part_velo_2023_pct != null ? `${r.part_velo_2023_pct.toFixed(2)} %` : "—",
+        r.part_velo_2018_pct != null ? `${fr(r.part_velo_2018_pct, 2)} %` : "—",
+        r.part_velo_2023_pct != null ? `${fr(r.part_velo_2023_pct, 2)} %` : "—",
         r.part_velo_2018_pct != null && r.part_velo_2023_pct != null
-          ? `${(r.part_velo_2023_pct - r.part_velo_2018_pct >= 0 ? "+" : "")}${(r.part_velo_2023_pct - r.part_velo_2018_pct).toFixed(2)}`
+          ? `${(r.part_velo_2023_pct - r.part_velo_2018_pct >= 0 ? "+" : "")}${fr(r.part_velo_2023_pct - r.part_velo_2018_pct, 2)}`
           : "—",
       ])
     );
@@ -377,7 +425,7 @@ function initModeSecteurs(key, block, { colorVar, unitLabel }) {
   if (top23) {
     const shortName = (top23.nom_secteur || "").replace(/^Montréal\s*:\s*/, "");
     statTop.appendChild(el("div", { class: "stat" }, [
-      el("div", { class: "stat-value" }, `${top23.part_pct.toFixed(2)} %`),
+      el("div", { class: "stat-value" }, `${fr(top23.part_pct, 2)} %`),
       el("div", { class: "stat-label" }, `Secteur le plus élevé, 2023 — ${shortName} (${fmtInt.format(top23.observations_brutes)} observations)`),
     ]));
   }
@@ -412,10 +460,10 @@ function initModeSecteurs(key, block, { colorVar, unitLabel }) {
       ["Arrondissement", "Part 2018", "Part 2023", "Variation (pts)"],
       rows.map((r) => [
         r.arrondissement,
-        r.part_2018_pct != null ? `${r.part_2018_pct.toFixed(2)} %` : "—",
-        r.part_2023_pct != null ? `${r.part_2023_pct.toFixed(2)} %` : "—",
+        r.part_2018_pct != null ? `${fr(r.part_2018_pct, 2)} %` : "—",
+        r.part_2023_pct != null ? `${fr(r.part_2023_pct, 2)} %` : "—",
         r.part_2018_pct != null && r.part_2023_pct != null
-          ? `${(r.part_2023_pct - r.part_2018_pct >= 0 ? "+" : "")}${(r.part_2023_pct - r.part_2018_pct).toFixed(2)}`
+          ? `${(r.part_2023_pct - r.part_2018_pct >= 0 ? "+" : "")}${fr(r.part_2023_pct - r.part_2018_pct, 2)}`
           : "—",
       ])
     );
@@ -1173,7 +1221,7 @@ function renderParcAuto(partsModales, achalandageSummary) {
       tcTrendCard = el("div", { class: "card" }, [
         el("h3", {}, `Achalandage régional TC, ${first}→${last}`),
         el("div", { class: "stat" }, [
-          el("div", { class: "stat-value" }, `${pctChange >= 0 ? "+" : ""}${pctChange.toFixed(1)} %`),
+          el("div", { class: "stat-value" }, `${pctChange >= 0 ? "+" : ""}${fr(pctChange, 1)} %`),
           el("div", { class: "stat-label" }, `déplacements annuels, total ARTM`),
         ]),
       ]);
@@ -1231,7 +1279,7 @@ async function initInfrastructure(meta, mesuresBus, rev) {
   revBox.innerHTML = "";
   revBox.appendChild(el("div", { class: "stat" }, [
     el("div", { class: "stat-value" }, `${fmtDec1.format(rev.total_km_realise)} / ${rev.cible_km} km`),
-    el("div", { class: "stat-label" }, `${pct.toFixed(0)} % de la cible du projet réalisée`),
+    el("div", { class: "stat-label" }, `${fr(pct, 0)} % de la cible du projet réalisée`),
   ]));
   const track = el("div", { class: "progress-track" }, el("div", { class: "progress-fill", style: `width:${pct}%` }));
   revBox.appendChild(track);
@@ -1451,6 +1499,13 @@ function renderSources(meta) {
     ]));
   }
   document.getElementById("meta-updated-at").textContent = new Date(meta.updated_at).toLocaleString("fr-CA");
+  // Fraîcheur des données, visible dès le haut de la page
+  const fresh = document.getElementById("hero-freshness");
+  if (fresh) {
+    const d = new Date(meta.updated_at).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" });
+    fresh.textContent = `Données à jour au ${d} · mises à jour automatiquement chaque lundi (enquêtes de mobilité : à chaque nouvelle édition, environ tous les 5 ans)`;
+    fresh.hidden = false;
+  }
 }
 
 function renderHeroKPIs(achalandageSummary, mesuresBusTotal, revTotal, veloCentralAgg) {
@@ -1467,24 +1522,30 @@ function renderHeroKPIs(achalandageSummary, mesuresBusTotal, revTotal, veloCentr
   const sameMonth2019Value = regional.get(sameMonth2019Key);
   const deltaYoY = sameMonth2019Value != null ? (100 * (lastValue - sameMonth2019Value)) / sameMonth2019Value : null;
 
+  // Libellés courts (environ 6 mots) ; le détail va dans la note, plus pâle.
+  const moisLong = (key) => new Date(`${key}-15T12:00:00`).toLocaleDateString("fr-CA", { month: "long", year: "numeric" });
   const cards = [
     {
       value: fmtInt.format(lastValue),
-      delta: deltaYoY != null ? `${deltaYoY >= 0 ? "+" : ""}${deltaYoY.toFixed(0)} % vs ${sameMonth2019Key} (même mois, 2019)` : null,
+      delta: deltaYoY != null ? `${deltaYoY >= 0 ? "+" : ""}${fr(deltaYoY, 0)} % vs ${moisLong(sameMonth2019Key)}` : null,
       up: deltaYoY != null && deltaYoY >= 0,
-      label: `Déplacements TC, région ARTM — ${lastMonth}`,
+      label: `Déplacements en TC, ${moisLong(lastMonth)}`,
+      note: "Région ARTM, tous les réseaux",
     },
     {
       value: `${fmtDec1.format(mesuresBusTotal)} km`,
-      label: "de voies/mesures préférentielles pour autobus, territoire ARTM",
+      label: "Voies réservées pour autobus",
+      note: "Mesures préférentielles, territoire ARTM",
     },
     {
       value: `${fmtDec1.format(revTotal)} / 184 km`,
-      label: "Réseau express vélo réalisé (Montréal)",
+      label: "Réseau express vélo réalisé",
+      note: "Montréal, cible du projet : 184 km",
     },
     {
-      value: `+${veloCentralAgg.relGrowthPct.toFixed(0)} %`,
-      label: "part vélo, 4 arrondissements centraux de Montréal, 2018→2023 (Plateau, Rosemont–La Petite-Patrie, Villeray–Saint-Michel–Parc-Extension, Ville-Marie)",
+      value: `+${fr(veloCentralAgg.relGrowthPct, 0)} %`,
+      label: "Croissance de la part vélo, 2018 → 2023",
+      note: "Plateau, Rosemont–La Petite-Patrie, Villeray–Saint-Michel–Parc-Extension, Ville-Marie",
     },
   ];
 
@@ -1495,6 +1556,7 @@ function renderHeroKPIs(achalandageSummary, mesuresBusTotal, revTotal, veloCentr
         c.delta ? el("span", { class: `kpi-delta ${c.up ? "up" : "down"}` }, c.delta) : null,
       ]),
       el("div", { class: "kpi-label" }, c.label),
+      c.note ? el("div", { class: "kpi-note" }, c.note) : null,
     ]));
   });
 }
@@ -1518,7 +1580,7 @@ function baseLineOptions({ yTitle, yMax, beginAtZero, tooltipIsInt, tooltipPrefi
         borderWidth: 1,
         padding: 10,
         callbacks: tooltipIsInt ? { label: (c) => `${c.dataset.label}: ${fmtInt.format(c.parsed.y)}` } :
-          { label: (c) => `${c.dataset.label}: ${tooltipPrefix}${c.parsed.y.toFixed(tooltipDecimals)}${tooltipSuffix}` },
+          { label: (c) => `${c.dataset.label}: ${tooltipPrefix}${fr(c.parsed.y, tooltipDecimals)}${tooltipSuffix}` },
       },
     },
     scales: {
@@ -1550,7 +1612,7 @@ function baseBarOptions({ yTitle, yMax, stacked, tooltipSuffix = "", tooltipDeci
         callbacks: {
           label: (c) => {
             const v = c.chart.options.indexAxis === "y" ? c.parsed.x : c.parsed.y;
-            return `${c.dataset.label}: ${v.toFixed(tooltipDecimals)}${tooltipSuffix}`;
+            return `${c.dataset.label}: ${fr(v, tooltipDecimals)}${tooltipSuffix}`;
           },
         },
       },
@@ -1568,6 +1630,7 @@ function baseBarOptions({ yTitle, yMax, stacked, tooltipSuffix = "", tooltipDeci
 
 async function boot() {
   initTheme();
+  initNavEnhancements();
   wireTableToggles();
 
   const meta = await fetchJSON("data/meta.json");

@@ -10,6 +10,9 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/hybride.css" />
+<script>window.goatcounter = {path: function(p) { return location.host + p }}</script>
+<script data-goatcounter="https://gabfortin.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
 <a class="skip-link" href="#principal">Aller au contenu principal</a>
@@ -28,7 +31,10 @@
       <a href="#bixi">BIXI</a>
       <a href="#methodologie">Sources</a>
     </nav>
-    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Changer le thème clair/sombre">◐</button>
+    <a class="topbar-profile" href="https://gabfortin.com" target="_blank" rel="noopener" title="gabfortin.com">
+      <span class="topbar-profile-name">gabfortin.com</span>
+      <img src="img/gabriel-fortin.jpg" alt="Gabriel Fortin" width="32" height="32">
+    </a>
   </div>
 </header>
 
@@ -39,12 +45,11 @@
       <p class="eyebrow">Portail indépendant · données ouvertes ARTM</p>
       <h1>Comment se déplace-t-on dans le Grand Montréal?</h1>
       <p class="lede">
-        Ce site compile et met en forme les <a href="https://donnees.artm.quebec" target="_blank" rel="noopener">données ouvertes publiées par l'ARTM</a>
-        (et quelques sources provinciales/municipales qu'elle fédère) : achalandage du transport collectif, parts modales des déplacements,
-        évolution des tarifs, voies réservées pour autobus et réseau cyclable. <strong>Aucun chiffre n'est retouché</strong> — chaque section indique
-        sa source exacte et sa date de mise à jour. Les données d'infrastructure et d'achalandage sont rafraîchies automatiquement chaque semaine ;
-        les enquêtes de mobilité (parts modales) le sont lorsque l'ARTM publie une nouvelle édition, tous les ~5 ans.
+        Les <a href="https://donnees.artm.quebec" target="_blank" rel="noopener">données ouvertes de l'ARTM</a>, mises en forme pour suivre
+        l'achalandage du transport collectif, les parts modales, les tarifs, les voies réservées et le réseau cyclable.
+        Chaque section indique sa source et sa date.
       </p>
+      <p class="freshness" id="hero-freshness" hidden></p>
       <p class="byline">Un projet de <a href="https://gabfortin.com" target="_blank" rel="noopener">Gabriel Fortin</a></p>
       <div class="kpi-grid" id="kpi-grid">
         <div class="kpi-card"><div class="kpi-value">…</div><div class="kpi-label">Chargement…</div></div>
@@ -512,7 +517,7 @@
     <p>Site indépendant construit à partir des données ouvertes de l'ARTM (<a href="https://donnees.artm.quebec" target="_blank" rel="noopener">donnees.artm.quebec</a>),
     de Données Québec, de Données Montréal et du flux GBFS public de BIXI. N'est pas un produit officiel de l'ARTM, de la Ville de Montréal ou de BIXI.
     Toutes les données sont publiées sous leurs licences ouvertes respectives.</p>
-    <p>Réalisé par <a href="https://gabfortin.com" target="_blank" rel="noopener">Gabriel Fortin</a> · <a href="https://gabfortin.com" target="_blank" rel="noopener">gabfortin.com</a></p>
+    <p>Réalisé par <a href="https://gabfortin.com" target="_blank" rel="noopener">Gabriel Fortin</a> · <a href="confidentialite.html">Confidentialité</a></p>
   </div>
 </footer>
 
