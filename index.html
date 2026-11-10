@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link rel="stylesheet" href="css/style.css" />
-<link rel="stylesheet" href="css/hybride.css" />
+<link rel="stylesheet" href="css/hybride.css?v=2" />
 <script>window.goatcounter = {path: function(p) { return location.host + p }}</script>
 <script data-goatcounter="https://gabfortin.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
@@ -19,7 +19,7 @@
 
 <header class="site-header">
   <div class="wrap">
-    <a class="brand" href="#principal">🚍 Mobilité Montréal <small>données ARTM</small></a>
+    <a class="brand" href="#principal" aria-label="Mobilité Montréal"><span class="brand-icone" aria-hidden="true">🚍</span><span class="brand-texte">Mobilité Montréal <small>données ARTM</small></span></a>
     <nav class="main-nav" aria-label="Navigation principale">
       <a href="#parts-modales">Parts modales</a>
       <a href="#achalandage">Achalandage</a>
@@ -31,12 +31,16 @@
       <a href="#bixi">BIXI</a>
       <a href="#methodologie">Sources</a>
     </nav>
+    <button type="button" class="gf-info-btn" id="gfInfoBtn" aria-label="À propos de ce site" aria-haspopup="dialog" aria-controls="gfInfoOverlay" title="À propos">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="7.6" r="1.4" fill="currentColor"/><path d="M12 11v6.2" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></svg>
+    </button>
     <a class="topbar-profile" href="https://gabfortin.com" target="_blank" rel="noopener" title="gabfortin.com">
       <span class="topbar-profile-name">gabfortin.com</span>
       <img src="img/gabriel-fortin.jpg" alt="Gabriel Fortin" width="32" height="32">
     </a>
   </div>
 </header>
+<script src="js/titre-barre.js"></script>
 
 <main id="principal">
 
@@ -512,6 +516,18 @@
 
 </main>
 
+<div class="gf-info-overlay" id="gfInfoOverlay">
+  <div class="gf-info-panel" role="dialog" aria-modal="true" aria-labelledby="gfInfoTitle">
+    <button type="button" class="gf-info-close" id="gfInfoClose" aria-label="Fermer « À propos »">✕</button>
+    <h2 id="gfInfoTitle">À propos de ce site</h2>
+    <p>Tableau de bord indépendant construit à partir des données ouvertes de l'ARTM : achalandage du transport collectif, parts modales, tarifs, infrastructures cyclables et voies réservées pour autobus dans la région métropolitaine de Montréal.</p>
+    <p><strong>Données :</strong> données ouvertes de l'ARTM (<a href="https://donnees.artm.quebec" target="_blank" rel="noopener">donnees.artm.quebec</a>), de Données Québec, de Données Montréal et du flux GBFS public de BIXI, sous leurs licences ouvertes respectives. Détails : <a href="#methodologie" data-ferme-apropos>méthodologie</a>.</p>
+    <p><span data-copie-de="hero-freshness">Mises à jour automatiquement chaque lundi</span>.</p>
+    <p><strong>Initiative indépendante</strong> : n'est pas un produit officiel de l'ARTM, de la Ville de Montréal ou de BIXI.</p>
+    <p>Réalisé par <a href="https://gabfortin.com" target="_blank" rel="noopener">Gabriel Fortin</a> · <a href="confidentialite.html">Confidentialité</a></p>
+  </div>
+</div>
+
 <footer class="site-footer">
   <div class="wrap">
     <p>Site indépendant construit à partir des données ouvertes de l'ARTM (<a href="https://donnees.artm.quebec" target="_blank" rel="noopener">donnees.artm.quebec</a>),
@@ -524,5 +540,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" integrity="sha512-k72Y+sws0148dhTBT8Nyro04RwjANbBxNCZ80xKT3FdHNON55/us15Ju0YQ2dD0uzyBJ5YjXnbUcLWaCaw3rCg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="js/main.js"></script>
+<script src="js/apropos.js"></script>
 </body>
 </html>

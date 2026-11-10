@@ -226,3 +226,145 @@ nav.main-nav a[aria-current="location"] { background: var(--accent-soft); color:
   .source-tag a::after, .src-name a::after { content: " (" attr(href) ")"; font-size: 10px; word-break: break-all; }
   @page { margin: 14mm; }
 }
+
+/* ── Titre dans la barre : apparaît quand le grand titre sort de l'écran ─────
+   js/titre-barre.js pose .titre-en-vue sur le header tant que .hero h1 est
+   visible, puis .titre-anime après le chargement. Seul le texte disparaît :
+   l'icône reste en haut à gauche. Sans JS, le titre reste
+   simplement affiché dans la barre. Entrée : dévoilement de gauche à droite,
+   flou → net, léger mouvement vers le haut ; puis le trait vert se dessine
+   dessous, en écho à celui du grand titre. */
+.site-header .brand-texte {
+  display: inline-block;
+  position: relative;
+  padding-bottom: 5px;
+  clip-path: inset(0 0 0 0);
+}
+.site-header .brand-texte::after {
+  content: ""; position: absolute; left: 0; bottom: 0;
+  width: 22px; height: 3px; border-radius: 3px;
+  background: var(--accent);
+  transform-origin: left;
+}
+.site-header.titre-anime .brand-texte {
+  transition:
+    clip-path .6s cubic-bezier(.2, .8, .2, 1),
+    transform .6s cubic-bezier(.2, .8, .2, 1),
+    filter .45s ease,
+    opacity .35s ease,
+    visibility 0s 0s;
+}
+.site-header.titre-anime .brand-texte::after { transition: transform .45s cubic-bezier(.2, .8, .2, 1) .3s; }
+.site-header.titre-en-vue .brand-texte {
+  clip-path: inset(0 100% 0 0);
+  transform: translateY(8px);
+  filter: blur(6px);
+  opacity: 0;
+  visibility: hidden;
+}
+/* En sortie : tout repart en même temps, et visibility attend la fin. */
+.site-header.titre-anime.titre-en-vue .brand-texte {
+  transition:
+    clip-path .35s ease-in,
+    transform .35s ease-in,
+    filter .3s ease-in,
+    opacity .3s ease-in,
+    visibility 0s .35s;
+}
+.site-header.titre-en-vue .brand-texte::after { transform: scaleX(0); transition-delay: 0s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header.titre-anime .brand-texte,
+  .site-header.titre-anime.titre-en-vue .brand-texte { transition: opacity .2s, visibility 0s; }
+  .site-header.titre-en-vue .brand-texte { clip-path: none; transform: none; filter: none; }
+  .site-header .brand-texte::after { transition: none !important; }
+}
+@media print {
+  .site-header.titre-en-vue .brand-texte { opacity: 1; visibility: visible; clip-path: none; transform: none; filter: none; }
+}
+
+/* Couleurs du bouton « i » et de la modale « À propos » (bloc commun ci-dessous) */
+:root {
+  --gf-info-1: #1DB860; --gf-info-2: #129a4c; --gf-info-glow: rgba(18,154,76,.6);
+  --gf-info-fond: var(--surface-1); --gf-info-bordure: var(--card-border);
+  --gf-info-rayon: var(--radius-lg); --gf-info-fermer: var(--surface-2);
+  --gf-info-titre: var(--text-primary); --gf-info-texte: var(--text-secondary); --gf-info-lien: var(--accent-strong);
+}
+/* Le « i » se colle à la photo, à droite de la barre. Sur ordinateur, le menu
+   garde sa place entre la marque et le groupe de droite. */
+.site-header .gf-info-btn { margin-left: auto; margin-right: -6px; }
+@media (min-width: 761px) { .site-header nav.main-nav { margin-left: auto; } }
+
+/* ── Bouton « i » + modale « À propos » ──────────────────────────────────────
+   Patron des cartes (MAP-DESIGN-SYSTEM.md), sans l'anneau qui pulse : la
+   pulsation est réservée aux cartes (DESIGN-PAGES.md). Bloc identique dans
+   tous les sites hors cartes ; seules les couleurs --gf-info-* (définies
+   juste au-dessus) changent d'un site à l'autre. Script : apropos.js. */
+.gf-info-btn {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  border: none; padding: 0;
+  background: linear-gradient(140deg, var(--gf-info-1), var(--gf-info-2));
+  color: #fff; cursor: pointer;
+  box-shadow: 0 4px 14px -4px var(--gf-info-glow), inset 0 1px 0 rgba(255,255,255,.45);
+  transition: transform .2s cubic-bezier(.22,.68,0,1), box-shadow .2s cubic-bezier(.22,.68,0,1);
+}
+.gf-info-btn svg { width: 16px; height: 16px; }
+.gf-info-btn:hover {
+  box-shadow: 0 8px 22px -4px var(--gf-info-glow), inset 0 1px 0 rgba(255,255,255,.5);
+  transform: translateY(-1px) scale(1.1);
+}
+.gf-info-btn:active { transform: scale(.94); }
+.gf-info-btn:focus-visible { outline: 2px solid var(--gf-info-2); outline-offset: 3px; }
+.gf-info-overlay {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(10,16,13,.45);
+  -webkit-backdrop-filter: blur(8px) saturate(140%); backdrop-filter: blur(8px) saturate(140%);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .25s ease, visibility 0s .25s;
+}
+.gf-info-overlay.open { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity .25s ease, visibility 0s; }
+.gf-info-panel {
+  position: relative; width: min(480px, 100%); max-height: min(84vh, 680px); overflow-y: auto;
+  background: var(--gf-info-fond);
+  border: 1px solid var(--gf-info-bordure); border-radius: var(--gf-info-rayon);
+  box-shadow: 0 24px 60px -16px rgba(0,0,0,.35);
+  padding: 30px 26px 26px; text-align: left;
+  transform: scale(.94) translateY(8px); opacity: 0;
+  transition: transform .28s cubic-bezier(.22,.68,0,1), opacity .28s cubic-bezier(.22,.68,0,1);
+}
+.gf-info-overlay.open .gf-info-panel { transform: none; opacity: 1; }
+.gf-info-panel h2 {
+  display: block; margin: 0 0 12px; padding-right: 36px;
+  font-size: 1.25rem; font-weight: 800; letter-spacing: -.01em; line-height: 1.25; color: var(--gf-info-titre);
+}
+.gf-info-panel h2::before, .gf-info-panel h2::after { content: none; display: none; }
+.gf-info-panel p, .gf-info-panel li { font-size: .88rem; line-height: 1.6; color: var(--gf-info-texte); }
+.gf-info-panel p { margin: 0 0 14px; }
+.gf-info-panel p:last-child { margin-bottom: 0; }
+.gf-info-panel ul { margin: 0 0 14px; padding-left: 20px; }
+.gf-info-panel li + li { margin-top: 4px; }
+.gf-info-panel a { color: var(--gf-info-lien); font-weight: 600; text-decoration: none; }
+.gf-info-panel a:hover { text-decoration: underline; }
+.gf-info-panel strong { color: var(--gf-info-titre); }
+.gf-info-close {
+  position: absolute; top: 16px; right: 16px;
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 1px solid var(--gf-info-bordure); background: var(--gf-info-fermer);
+  color: var(--gf-info-titre); cursor: pointer; font: inherit; font-size: 14px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .18s ease;
+}
+.gf-info-close:hover { transform: scale(1.08); }
+@media (max-width: 760px) {
+  .gf-info-btn { width: 28px; height: 28px; }
+  .gf-info-btn svg { width: 14px; height: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gf-info-btn, .gf-info-panel { transition: none; }
+  .gf-info-btn:hover { transform: none; }
+  .gf-info-panel { transform: none; }
+}
+@media print { .gf-info-btn, .gf-info-overlay { display: none !important; } }
