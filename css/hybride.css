@@ -43,7 +43,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not(.print-light) {
+  :root:not(.print-light):where(:not([data-theme="light"])) {
     --accent-strong: #3ddc84;
     --accent-soft:   rgba(29,184,96,.18);
     --card-bg:     rgba(28,29,27,.82);
@@ -62,6 +62,26 @@
     --shadow-card: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -10px rgba(0,0,0,.5), var(--card-inner);
   }
 }
+/* Thème sombre forcé (futur bouton de thème : <html data-theme="dark">), mêmes règles que ci-dessus. */
+  :root:not(.print-light):where([data-theme="dark"]) {
+    --accent-strong: #3ddc84;
+    --accent-soft:   rgba(29,184,96,.18);
+    --card-bg:     rgba(28,29,27,.82);
+    --card-border: rgba(255,255,255,.08);
+    --card-inner:  inset 0 1px 0 rgba(255,255,255,.04);
+    --header-bg:   rgba(22,22,21,.82);
+    --control-bg:  rgba(255,255,255,.06);
+    --page:   #0e0f0e;
+    --mesh-1: rgba(29,184,96,.07);
+    --mesh-2: rgba(41,171,226,.05);
+    --mesh-3: rgba(139,92,246,.04);
+    --surface-1: #1c1d1b;
+    --surface-2: rgba(255,255,255,.05);
+    --page-plane: transparent;
+    --text-muted: #9a9991;
+    --shadow-card: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -10px rgba(0,0,0,.5), var(--card-inner);
+  }
+
 
 /* ── Base : fond neutre + taches de couleur très discrètes, immobiles ───── */
 html { background: var(--page); }
@@ -154,11 +174,15 @@ nav.main-nav a:hover { background: var(--accent-soft); color: var(--text-primary
 
 /* ── Carte : tuiles assombries et contrôles sombres en mode sombre ───────── */
 @media (prefers-color-scheme: dark) {
-  :root:not(.print-light) .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.6); }
-  :root:not(.print-light) .leaflet-bar a,
-  :root:not(.print-light) .leaflet-control-layers { background: #1c1d1b !important; color: #f0efec !important; border-color: rgba(255,255,255,.1) !important; }
-  :root:not(.print-light) .leaflet-control-attribution { background: rgba(28,29,27,.85) !important; color: #9a9991 !important; }
+  :root:not(.print-light):where(:not([data-theme="light"])) .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.6); }
+  :root:not(.print-light):where(:not([data-theme="light"])) .leaflet-bar a, :root:not(.print-light):where(:not([data-theme="light"])) .leaflet-control-layers { background: #1c1d1b !important; color: #f0efec !important; border-color: rgba(255,255,255,.1) !important; }
+  :root:not(.print-light):where(:not([data-theme="light"])) .leaflet-control-attribution { background: rgba(28,29,27,.85) !important; color: #9a9991 !important; }
 }
+/* Thème sombre forcé (futur bouton de thème : <html data-theme="dark">), mêmes règles que ci-dessus. */
+  :root:not(.print-light):where([data-theme="dark"]) .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.6); }
+  :root:not(.print-light):where([data-theme="dark"]) .leaflet-bar a, :root:not(.print-light):where([data-theme="dark"]) .leaflet-control-layers { background: #1c1d1b !important; color: #f0efec !important; border-color: rgba(255,255,255,.1) !important; }
+  :root:not(.print-light):where([data-theme="dark"]) .leaflet-control-attribution { background: rgba(28,29,27,.85) !important; color: #9a9991 !important; }
+
 .leaflet-control-layers { border-radius: 10px !important; }
 .leaflet-control-layers input { accent-color: var(--accent); }
 
@@ -228,25 +252,26 @@ nav.main-nav a[aria-current="location"] { background: var(--accent-soft); color:
 }
 
 /* ── Titre dans la barre : apparaît quand le grand titre sort de l'écran ─────
-   js/titre-barre.js pose .titre-en-vue sur le header tant que .hero h1 est
-   visible, puis .titre-anime après le chargement. Seul le texte disparaît :
+   js/titre-barre.js pose .titre-en-vue sur la barre tant que le grand titre
+   est visible, puis .titre-anime après le chargement (barre et titre : voir
+   le script). Seul le texte disparaît :
    l'icône reste en haut à gauche. Sans JS, le titre reste
    simplement affiché dans la barre. Entrée : dévoilement de gauche à droite,
    flou → net, léger mouvement vers le haut ; puis le trait vert se dessine
    dessous, en écho à celui du grand titre. */
-.site-header .brand-texte {
+.brand-texte {
   display: inline-block;
   position: relative;
   padding-bottom: 5px;
   clip-path: inset(0 0 0 0);
 }
-.site-header .brand-texte::after {
+.brand-texte::after {
   content: ""; position: absolute; left: 0; bottom: 0;
   width: 22px; height: 3px; border-radius: 3px;
   background: var(--accent);
   transform-origin: left;
 }
-.site-header.titre-anime .brand-texte {
+.titre-anime .brand-texte {
   transition:
     clip-path .6s cubic-bezier(.2, .8, .2, 1),
     transform .6s cubic-bezier(.2, .8, .2, 1),
@@ -254,8 +279,8 @@ nav.main-nav a[aria-current="location"] { background: var(--accent-soft); color:
     opacity .35s ease,
     visibility 0s 0s;
 }
-.site-header.titre-anime .brand-texte::after { transition: transform .45s cubic-bezier(.2, .8, .2, 1) .3s; }
-.site-header.titre-en-vue .brand-texte {
+.titre-anime .brand-texte::after { transition: transform .45s cubic-bezier(.2, .8, .2, 1) .3s; }
+.titre-en-vue .brand-texte {
   clip-path: inset(0 100% 0 0);
   transform: translateY(8px);
   filter: blur(6px);
@@ -263,7 +288,7 @@ nav.main-nav a[aria-current="location"] { background: var(--accent-soft); color:
   visibility: hidden;
 }
 /* En sortie : tout repart en même temps, et visibility attend la fin. */
-.site-header.titre-anime.titre-en-vue .brand-texte {
+.titre-anime.titre-en-vue .brand-texte {
   transition:
     clip-path .35s ease-in,
     transform .35s ease-in,
@@ -271,16 +296,16 @@ nav.main-nav a[aria-current="location"] { background: var(--accent-soft); color:
     opacity .3s ease-in,
     visibility 0s .35s;
 }
-.site-header.titre-en-vue .brand-texte::after { transform: scaleX(0); transition-delay: 0s; }
+.titre-en-vue .brand-texte::after { transform: scaleX(0); transition-delay: 0s; }
 
 @media (prefers-reduced-motion: reduce) {
-  .site-header.titre-anime .brand-texte,
-  .site-header.titre-anime.titre-en-vue .brand-texte { transition: opacity .2s, visibility 0s; }
-  .site-header.titre-en-vue .brand-texte { clip-path: none; transform: none; filter: none; }
-  .site-header .brand-texte::after { transition: none !important; }
+  .titre-anime .brand-texte,
+  .titre-anime.titre-en-vue .brand-texte { transition: opacity .2s, visibility 0s; }
+  .titre-en-vue .brand-texte { clip-path: none; transform: none; filter: none; }
+  .brand-texte::after { transition: none !important; }
 }
 @media print {
-  .site-header.titre-en-vue .brand-texte { opacity: 1; visibility: visible; clip-path: none; transform: none; filter: none; }
+  .titre-en-vue .brand-texte { opacity: 1; visibility: visible; clip-path: none; transform: none; filter: none; }
 }
 
 /* Couleurs du bouton « i » et de la modale « À propos » (bloc commun ci-dessous) */
@@ -368,3 +393,7 @@ nav.main-nav a[aria-current="location"] { background: var(--accent-soft); color:
   .gf-info-panel { transform: none; }
 }
 @media print { .gf-info-btn, .gf-info-overlay { display: none !important; } }
+
+/* Bas de page en trois lignes : données, indépendance, signature et version (DESIGN-PAGES.md) */
+footer.site-footer p { margin: 0; }
+footer.site-footer p + p { margin-top: 6px; }

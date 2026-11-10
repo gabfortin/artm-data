@@ -1,0 +1,5 @@
+{
+  "fichier": "version.txt",
+  "donnees": ["data/", "*.geojson"],
+  "pages": ["index.html", "confidentialite.html"]
+}

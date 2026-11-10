@@ -36,6 +36,13 @@ jobs:
           if git diff --cached --quiet; then
             echo "No data changes this week."
           else
-            git commit -m "data: mise à jour hebdomadaire automatique ($(date -u +%Y-%m-%d))"
+            # Version x.y.z : une mise à jour de données ajoute 1 à z
+            # (règle de ~/Developer/outils/version.py, appliquée ici sans ce script).
+            IFS=. read -r X Y Z < version.txt
+            N="$X.$Y.$((Z + 1))"
+            echo "$N" > version.txt
+            sed -i "s|<span data-version>[^<]*</span>|<span data-version>$N</span>|" index.html confidentialite.html
+            git add version.txt index.html confidentialite.html
+            git commit -m "data: mise à jour hebdomadaire ($(date -u +%Y-%m-%d), v$N)"
             git push
           fi
