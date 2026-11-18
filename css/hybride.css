@@ -14,6 +14,11 @@
    séries). --surface-1 reste OPAQUE : fond des infobulles des graphiques.
    Mode sombre : suit l'appareil uniquement (pas de bouton de thème).
    ═══════════════════════════════════════════════════════════════════════════ */
+/* ── Style D « dashboard détaillé » : bloc commun (outils/communs/hybride.css) ──
+   Identique dans artm-data, dechets-montreal, outils-cabinet et panneau-admin,
+   vérifié par le hook (outils/verifier_communs.py). Ne pas le modifier ici :
+   changer le modèle, puis le recopier dans chaque site. Les règles propres à
+   un site vont juste APRÈS ce bloc (elles l'emportent à spécificité égale). */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 :root {
@@ -87,7 +92,10 @@
 html { background: var(--page); }
 body {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-feature-settings: 'cv11', 'ss01', 'tnum';
+  /* 'tnum' retiré du texte courant : dans Inter, il donne aussi une largeur
+     fixe au trait d'union (« Plateau - Mont - Royal »). Chiffres tabulaires
+     là où ils comptent (KPI, tableaux, graphiques) : font-variant-numeric. */
+  font-feature-settings: 'cv11', 'ss01';
   background:
     radial-gradient(50vmax 40vmax at 8% 0%,   var(--mesh-1), transparent 65%),
     radial-gradient(45vmax 40vmax at 95% 10%, var(--mesh-2), transparent 65%),
@@ -170,19 +178,6 @@ nav.main-nav a:hover { background: var(--accent-soft); color: var(--text-primary
   font-weight: 500;
 }
 .table-toggle:hover { border-color: var(--accent); color: var(--accent-strong); }
-.central-toggle input { accent-color: var(--accent); }
-
-/* ── Carte : tuiles assombries et contrôles sombres en mode sombre ───────── */
-@media (prefers-color-scheme: dark) {
-  :root:not(.print-light):where(:not([data-theme="light"])) .leaflet-bar a, :root:not(.print-light):where(:not([data-theme="light"])) .leaflet-control-layers { background: #1c1d1b !important; color: #f0efec !important; border-color: rgba(255,255,255,.1) !important; }
-  :root:not(.print-light):where(:not([data-theme="light"])) .leaflet-control-attribution { background: rgba(28,29,27,.85) !important; color: #9a9991 !important; }
-}
-/* Thème sombre forcé (futur bouton de thème : <html data-theme="dark">), mêmes règles que ci-dessus. */
-  :root:not(.print-light):where([data-theme="dark"]) .leaflet-bar a, :root:not(.print-light):where([data-theme="dark"]) .leaflet-control-layers { background: #1c1d1b !important; color: #f0efec !important; border-color: rgba(255,255,255,.1) !important; }
-  :root:not(.print-light):where([data-theme="dark"]) .leaflet-control-attribution { background: rgba(28,29,27,.85) !important; color: #9a9991 !important; }
-
-.leaflet-control-layers { border-radius: 10px !important; }
-.leaflet-control-layers input { accent-color: var(--accent); }
 
 /* ── Pied de page ────────────────────────────────────────────────────────── */
 footer.site-footer a { color: var(--text-secondary); }
@@ -233,8 +228,8 @@ nav.main-nav a[aria-current="location"] { background: var(--accent-soft); color:
 @media print {
   :root { --page: #fff; --card-bg: #fff; }
   html, body { background: #fff !important; color: #000; }
-  header.site-header, .skip-link, .topbar-profile, .table-toggle, .central-toggle,
-  .anchor-link, .leaflet-control-container, footer.site-footer a[href$="confidentialite.html"] { display: none !important; }
+  header.site-header, .skip-link, .topbar-profile, .table-toggle,
+  .anchor-link, footer.site-footer a[href$="confidentialite.html"] { display: none !important; }
   .card, .kpi-card, .callout {
     background: #fff !important; box-shadow: none !important;
     -webkit-backdrop-filter: none; backdrop-filter: none;
@@ -248,6 +243,25 @@ nav.main-nav a[aria-current="location"] { background: var(--accent-soft); color:
   .source-tag a::after, .src-name a::after { content: " (" attr(href) ")"; font-size: 10px; word-break: break-all; }
   @page { margin: 14mm; }
 }
+/* ── Fin du bloc commun du style D ── */
+
+/* ── Propre à artm-data (après le bloc commun) ───────────────────────────── */
+body { font-feature-settings: 'cv11', 'ss01', 'tnum'; }
+.central-toggle input { accent-color: var(--accent); }
+
+/* ── Carte : tuiles assombries et contrôles sombres en mode sombre ───────── */
+@media (prefers-color-scheme: dark) {
+  :root:not(.print-light):where(:not([data-theme="light"])) .leaflet-bar a, :root:not(.print-light):where(:not([data-theme="light"])) .leaflet-control-layers { background: #1c1d1b !important; color: #f0efec !important; border-color: rgba(255,255,255,.1) !important; }
+  :root:not(.print-light):where(:not([data-theme="light"])) .leaflet-control-attribution { background: rgba(28,29,27,.85) !important; color: #9a9991 !important; }
+}
+/* Thème sombre forcé (futur bouton de thème : <html data-theme="dark">), mêmes règles que ci-dessus. */
+  :root:not(.print-light):where([data-theme="dark"]) .leaflet-bar a, :root:not(.print-light):where([data-theme="dark"]) .leaflet-control-layers { background: #1c1d1b !important; color: #f0efec !important; border-color: rgba(255,255,255,.1) !important; }
+  :root:not(.print-light):where([data-theme="dark"]) .leaflet-control-attribution { background: rgba(28,29,27,.85) !important; color: #9a9991 !important; }
+
+.leaflet-control-layers { border-radius: 10px !important; }
+.leaflet-control-layers input { accent-color: var(--accent); }
+
+@media print { .central-toggle, .leaflet-control-container { display: none !important; } }
 
 /* ── Titre dans la barre : apparaît quand le grand titre sort de l'écran ─────
    js/titre-barre.js pose .titre-en-vue sur la barre tant que le grand titre
