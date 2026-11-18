@@ -174,12 +174,10 @@ nav.main-nav a:hover { background: var(--accent-soft); color: var(--text-primary
 
 /* ── Carte : tuiles assombries et contrôles sombres en mode sombre ───────── */
 @media (prefers-color-scheme: dark) {
-  :root:not(.print-light):where(:not([data-theme="light"])) .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.6); }
   :root:not(.print-light):where(:not([data-theme="light"])) .leaflet-bar a, :root:not(.print-light):where(:not([data-theme="light"])) .leaflet-control-layers { background: #1c1d1b !important; color: #f0efec !important; border-color: rgba(255,255,255,.1) !important; }
   :root:not(.print-light):where(:not([data-theme="light"])) .leaflet-control-attribution { background: rgba(28,29,27,.85) !important; color: #9a9991 !important; }
 }
 /* Thème sombre forcé (futur bouton de thème : <html data-theme="dark">), mêmes règles que ci-dessus. */
-  :root:not(.print-light):where([data-theme="dark"]) .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.6); }
   :root:not(.print-light):where([data-theme="dark"]) .leaflet-bar a, :root:not(.print-light):where([data-theme="dark"]) .leaflet-control-layers { background: #1c1d1b !important; color: #f0efec !important; border-color: rgba(255,255,255,.1) !important; }
   :root:not(.print-light):where([data-theme="dark"]) .leaflet-control-attribution { background: rgba(28,29,27,.85) !important; color: #9a9991 !important; }
 

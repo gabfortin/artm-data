@@ -1336,17 +1336,12 @@ async function initInfrastructure(meta, mesuresBus, rev) {
 }
 
 /* ===========================================================================
-   5) Carte Leaflet
+   5) Carte (API de Leaflet, composant vendor/carte/)
    =========================================================================== */
 
 async function initMap() {
   const map = L.map("map", { scrollWheelZoom: false }).setView([45.55, -73.65], 10);
-  // Tuiles OpenStreetMap standard — aucune clé requise, contrairement aux
-  // tuiles CARTO (basemaps.cartocdn.com) qui exigent désormais un compte.
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 19,
-  }).addTo(map);
+  // Fond de carte : OpenFreeMap (Positron, ou Dark en mode sombre), posé par vendor/carte/carte.js
 
   const typeColor = {
     "Voie réservée": cssVar("--series-tc"),

@@ -17,7 +17,7 @@ qui veut creuser : comparer des séries, lire les tableaux, vérifier les source
 | **Sous le capot** | Ce que le métro et le REM font vraiment : kilométrage, incidents, offre planifiée |
 | **Tarifs** | Le prix d'une passe mensuelle, de 2018 à aujourd'hui |
 | **L'espace donné aux autobus et au vélo** | Voies réservées, réseau express vélo, réseau cyclable |
-| **Carte des infrastructures** | Où se trouvent ces infrastructures (Leaflet) |
+| **Carte des infrastructures** | Où se trouvent ces infrastructures (composant de carte commun, MapLibre) |
 | **Le vélo, compté passage par passage** | Compteurs vélo permanents de Montréal |
 | **BIXI, en ce moment** | Disponibilité en direct (flux GBFS) et historique des trajets |
 | **Méthodologie, sources et limites** | Source de chaque série et ses limites |
@@ -96,7 +96,8 @@ sources ARTM, Ville, STM → scripts/update_data.py → data/*.json, *.geojson �
 | `confidentialite.html` | Politique de confidentialité |
 | `css/style.css` | Mise en page, composants, couleurs des séries |
 | `css/hybride.css` | Habillage du style D (Inter, accent vert, verre léger, mode sombre) et blocs communs |
-| `js/main.js` | Tout le rendu : graphiques Chart.js, carte Leaflet, BIXI en direct |
+| `js/main.js` | Tout le rendu : graphiques Chart.js, carte, BIXI en direct |
+| `vendor/carte/` | Composant de carte commun (modèle `~/Developer/outils/communs/carte/`) : API de Leaflet dessinée par MapLibre, fond OpenFreeMap |
 | `js/apropos.js`, `js/titre-barre.js` | Composants communs (bouton « i », titre dans la barre) |
 | `data/` | Données générées par le robot ou les scripts à la main : ne pas modifier sans eux |
 | `scripts/update_data.py` | Pipeline hebdomadaire (bibliothèque standard seulement) |
@@ -122,7 +123,7 @@ l'appareil).
 |---|---|---|
 | Chaque visite | Page, site d'origine, appareil, pays | GoatCounter (mesure d'audience anonyme) |
 | Section BIXI | Requête du flux public | BIXI (GBFS) |
-| Carte | Requêtes de tuiles de la zone affichée | OpenStreetMap |
+| Carte | Fond de carte de la zone affichée | OpenFreeMap |
 
 Détails : [confidentialite.html](confidentialite.html), à mettre à jour (avec
 sa date) si un service externe est ajouté.
@@ -130,8 +131,8 @@ sa date) si un service externe est ajouté.
 ## Crédits
 
 - [Chart.js](https://www.chartjs.org) 4.4.4 (MIT), chargé depuis jsDelivr
-- [Leaflet](https://leafletjs.com) 1.9.4 (BSD-2-Clause), chargé depuis cdnjs
-- Fond de carte © les contributeurs d'[OpenStreetMap](https://www.openstreetmap.org/copyright) (ODbL)
+- [MapLibre GL JS](https://maplibre.org) (BSD-3-Clause), hébergé dans `vendor/carte/` ; fond [OpenFreeMap](https://openfreemap.org), © [OpenMapTiles](https://www.openmaptiles.org)
+- Données du fond de carte © les contributeurs d'[OpenStreetMap](https://www.openstreetmap.org/copyright) (ODbL)
 - Données © ARTM, Ville de Montréal, STM et BIXI, sous leurs licences ouvertes respectives
 
 ## Auteur

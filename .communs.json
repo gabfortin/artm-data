@@ -1,7 +1,12 @@
 {
   "fichiers": {
     "js/apropos.js": "apropos.js",
-    "js/titre-barre.js": "titre-barre.js"
+    "js/titre-barre.js": "titre-barre.js",
+    "vendor/carte/maplibre-gl.js": "carte/maplibre-gl.js",
+    "vendor/carte/maplibre-gl.css": "carte/maplibre-gl.css",
+    "vendor/carte/carte.js": "carte/carte.js",
+    "vendor/carte/carte.css": "carte/carte.css",
+    "vendor/carte/LICENSE-maplibre.txt": "carte/LICENSE-maplibre.txt"
   },
   "blocs": {
     "css/hybride.css": [
