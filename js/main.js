@@ -79,13 +79,21 @@ function registerRedraw(fn) { redrawCallbacks.push(fn); }
 function initNavEnhancements() {
   const links = new Map();
   document.querySelectorAll('nav.main-nav a[href^="#"]').forEach((a) => links.set(a.getAttribute("href").slice(1), a));
-  const sections = [...document.querySelectorAll("section.panel[id]")].filter((sec) => links.has(sec.id));
+  // Le menu est court : une section sans lien propre (Métro & REM, Tarifs,
+  // Carte, BIXI) allume le lien de la section qui la précède.
+  const lienDe = new Map();
+  let courant = null;
+  document.querySelectorAll("section.panel[id]").forEach((sec) => {
+    courant = links.get(sec.id) || courant;
+    if (courant) lienDe.set(sec, courant);
+  });
+  const sections = [...lienDe.keys()];
   if ("IntersectionObserver" in window && sections.length) {
     const io = new IntersectionObserver((entries) => {
       for (const e of entries) {
         if (!e.isIntersecting) continue;
         links.forEach((a) => a.removeAttribute("aria-current"));
-        links.get(e.target.id).setAttribute("aria-current", "location");
+        lienDe.get(e.target).setAttribute("aria-current", "location");
       }
     }, { rootMargin: "-40% 0px -55% 0px" });
     sections.forEach((sec) => io.observe(sec));

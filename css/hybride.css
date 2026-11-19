@@ -129,9 +129,9 @@ nav.main-nav a:hover { background: var(--accent-soft); color: var(--text-primary
   transition: color .2s, border-color .2s;
 }
 .topbar-profile:hover { color: var(--text-primary); border-color: var(--accent); }
-/* Le menu (9 liens) doit tenir sur une ligne : la photo seule sert de lien,
-   le texte « gabfortin.com » reste lu par les lecteurs d'écran ; sous 1200 px,
-   le sous-titre de la marque disparaît aussi. */
+/* Barre épurée : la photo seule sert de lien, le texte « gabfortin.com » reste
+   lu par les lecteurs d'écran ; menu de 5 liens au plus (DESIGN-PAGES.md) ;
+   sous 1200 px, le sous-titre de la marque disparaît aussi. */
 .topbar-profile { padding: 2px; }
 .topbar-profile-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (max-width: 1200px) { .brand small { display: none; } }
@@ -327,10 +327,12 @@ body { font-feature-settings: 'cv11', 'ss01', 'tnum'; }
   --gf-info-rayon: var(--radius-lg); --gf-info-fermer: var(--surface-2);
   --gf-info-titre: var(--text-primary); --gf-info-texte: var(--text-secondary); --gf-info-lien: var(--accent-strong);
 }
-/* Le « i » se colle à la photo, à droite de la barre. Sur ordinateur, le menu
-   garde sa place entre la marque et le groupe de droite. */
-.site-header .gf-info-btn { margin-left: auto; margin-right: -6px; }
-@media (min-width: 761px) { .site-header nav.main-nav { margin-left: auto; } }
+/* Barre en trois zones, comme compteurvelo.com : marque à gauche, menu centré,
+   groupe « Faire un don » + « i » + photo collé à droite (8 px entre chacun).
+   Les deux côtés prennent la même largeur pour que le menu reste au centre. */
+.site-header .brand, .site-header .topbar-droite { flex: 1 1 0; }
+.topbar-droite { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+@media (max-width: 760px) { .site-header .brand { flex: 1 1 auto; } }
 
 /* ── Bouton « i » + modale « À propos » ──────────────────────────────────────
    Patron des cartes (MAP-DESIGN-SYSTEM.md), sans l'anneau qui pulse : la

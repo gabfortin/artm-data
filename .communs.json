@@ -6,7 +6,8 @@
     "vendor/carte/maplibre-gl.css": "carte/maplibre-gl.css",
     "vendor/carte/carte.js": "carte/carte.js",
     "vendor/carte/carte.css": "carte/carte.css",
-    "vendor/carte/LICENSE-maplibre.txt": "carte/LICENSE-maplibre.txt"
+    "vendor/carte/LICENSE-maplibre.txt": "carte/LICENSE-maplibre.txt",
+    "js/don.js": "don.js"
   },
   "blocs": {
     "css/hybride.css": [
