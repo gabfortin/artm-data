@@ -103,6 +103,8 @@ sources ARTM, Ville, STM → scripts/update_data.py → data/*.json, *.geojson �
 | `js/main.js` | Tout le rendu : graphiques Chart.js, carte, BIXI en direct |
 | `vendor/carte/` | Composant de carte commun (modèle `~/Developer/outils/communs/carte/`) : API de Leaflet dessinée par MapLibre, fond OpenFreeMap |
 | `js/apropos.js`, `js/titre-barre.js` | Composants communs (bouton « i », titre dans la barre) |
+| `favicon.svg`, `favicon.png`, `apple-touch-icon.png` | Icônes du site (ligne de métro, stations allumées, rame), dessinées par `~/Developer/outils/icones/icones_sites.py` |
+| `img/apercu.jpg` | Aperçu de partage (1200 × 630) |
 | `data/` | Données générées par le robot ou les scripts à la main : ne pas modifier sans eux |
 | `scripts/update_data.py` | Pipeline hebdomadaire (bibliothèque standard seulement) |
 | `scripts/analyze_*.py`, `scripts/od_lib.py` | Analyses lancées à la main (voir « Mise à jour ») |

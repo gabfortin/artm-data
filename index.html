@@ -5,16 +5,47 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Mobilité Montréal — tableau de bord des données ARTM</title>
 <meta name="description" content="Tableau de bord indépendant construit à partir des données ouvertes de l'ARTM : achalandage du transport collectif, parts modales, tarifs, infrastructures cyclables et voies réservées pour autobus dans la région métropolitaine de Montréal." />
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚍</text></svg>" />
+<link rel="canonical" href="https://artm.gabfortin.com/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Gabriel Fortin" />
+<meta property="og:title" content="Mobilité Montréal — tableau de bord des données ARTM" />
+<meta property="og:description" content="Tableau de bord indépendant construit à partir des données ouvertes de l'ARTM : achalandage du transport collectif, parts modales, tarifs, infrastructures cyclables et voies réservées pour autobus dans la région métropolitaine de Montréal." />
+<meta property="og:url" content="https://artm.gabfortin.com/" />
+<meta property="og:image" content="https://artm.gabfortin.com/img/apercu.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Mobilité Montréal : achalandage du transport collectif, voies réservées et réseau cyclable" />
+<meta property="og:locale" content="fr_CA" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Mobilité Montréal — tableau de bord des données ARTM" />
+<meta name="twitter:description" content="Tableau de bord indépendant construit à partir des données ouvertes de l'ARTM : achalandage du transport collectif, parts modales, tarifs, infrastructures cyclables et voies réservées pour autobus dans la région métropolitaine de Montréal." />
+<meta name="twitter:image" content="https://artm.gabfortin.com/img/apercu.jpg" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "Mobilité Montréal — tableau de bord des données ARTM",
+  "description": "Tableau de bord indépendant construit à partir des données ouvertes de l'ARTM : achalandage du transport collectif, parts modales, tarifs, infrastructures cyclables et voies réservées pour autobus dans la région métropolitaine de Montréal.",
+  "url": "https://artm.gabfortin.com/",
+  "image": "https://artm.gabfortin.com/img/apercu.jpg",
+  "inLanguage": "fr-CA",
+  "spatialCoverage": { "@type": "Place", "name": "Région métropolitaine de Montréal, Québec" },
+  "author": { "@type": "Person", "@id": "https://gabfortin.com/#gabriel-fortin", "name": "Gabriel Fortin", "url": "https://gabfortin.com" },
+  "isBasedOn": "https://donnees.artm.quebec"
+}
+</script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="icon" type="image/png" href="favicon.png" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
 
 <!-- Composant de carte commun (API de Leaflet dessinée par MapLibre, fond OpenFreeMap), hébergé dans le dépôt -->
-<link rel="stylesheet" href="vendor/carte/maplibre-gl.css?v=1.4.0" />
-<link rel="stylesheet" href="vendor/carte/carte.css?v=1.4.0" />
-<link rel="stylesheet" href="css/style-d.css?v=1.4.0" />
-<link rel="stylesheet" href="css/style.css?v=1.4.0" />
-<link rel="stylesheet" href="css/chargement.css?v=1.4.0" />
-<link rel="stylesheet" href="css/chargement-metro.css?v=1.4.0" />
-<link rel="stylesheet" href="css/hybride.css?v=1.4.0" />
+<link rel="stylesheet" href="vendor/carte/maplibre-gl.css?v=1.4.1" />
+<link rel="stylesheet" href="vendor/carte/carte.css?v=1.4.1" />
+<link rel="stylesheet" href="css/style-d.css?v=1.4.1" />
+<link rel="stylesheet" href="css/style.css?v=1.4.1" />
+<link rel="stylesheet" href="css/chargement.css?v=1.4.1" />
+<link rel="stylesheet" href="css/chargement-metro.css?v=1.4.1" />
+<link rel="stylesheet" href="css/hybride.css?v=1.4.1" />
 <script>window.goatcounter = {path: function(p) { return location.host + p }}</script>
 <script data-goatcounter="https://gabfortin.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
@@ -23,7 +54,7 @@
 
 <header class="site-header">
   <div class="wrap">
-    <a class="brand" href="#principal" aria-label="Mobilité Montréal"><span class="brand-icone" aria-hidden="true">🚍</span><span class="brand-texte">Mobilité Montréal <small>données ARTM</small></span></a>
+    <a class="brand" href="#principal" aria-label="Mobilité Montréal"><span class="brand-texte">Mobilité Montréal</span></a>
     <nav class="main-nav" aria-label="Navigation principale">
       <a href="#parts-modales">Parts modales</a>
       <a href="#achalandage">Transport collectif</a>
@@ -35,7 +66,7 @@
       <button type="button" class="gf-info-btn" id="gfInfoBtn" aria-label="À propos de ce site" aria-haspopup="dialog" aria-controls="gfInfoOverlay" title="À propos">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="7.6" r="1.4" fill="currentColor"/><path d="M12 11v6.2" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></svg>
       </button>
-      <script src="js/don.js?v=1.4.0"></script>
+      <script src="js/don.js?v=1.4.1"></script>
       <a class="topbar-profile" href="https://gabfortin.com" target="_blank" rel="noopener" title="gabfortin.com">
         <span class="topbar-profile-name">gabfortin.com</span>
         <img src="img/gabriel-fortin.jpg" alt="Gabriel Fortin" width="32" height="32">
@@ -43,7 +74,7 @@
     </div>
   </div>
 </header>
-<script src="js/titre-barre.js?v=1.4.0"></script>
+<script src="js/titre-barre.js?v=1.4.1"></script>
 
 <main id="principal">
 
@@ -525,9 +556,9 @@
     <h2 id="gfInfoTitle">À propos de ce site</h2>
     <p>Tableau de bord indépendant construit à partir des données ouvertes de l'ARTM : achalandage du transport collectif, parts modales, tarifs, infrastructures cyclables et voies réservées pour autobus dans la région métropolitaine de Montréal.</p>
     <p><strong>Données :</strong> données ouvertes de l'ARTM (<a href="https://donnees.artm.quebec" target="_blank" rel="noopener">donnees.artm.quebec</a>), de Données Québec, de Données Montréal et du flux GBFS public de BIXI, sous leurs licences ouvertes respectives. Détails : <a href="#methodologie" data-ferme-apropos>méthodologie</a>.</p>
-    <p><span data-copie-de="hero-freshness">Mises à jour automatiquement chaque lundi</span>.</p>
+    <p><span data-copie-de="hero-freshness">Mises à jour automatiquement chaque lundi</span>. Les enquêtes de mobilité (parts modales) changent à chaque nouvelle édition, environ tous les 5 ans.</p>
     <p><strong>Initiative indépendante</strong> : n'est pas un produit officiel de l'ARTM, de la Ville de Montréal ou de BIXI.</p>
-    <p>Réalisé par <a href="https://gabfortin.com" target="_blank" rel="noopener">Gabriel Fortin</a> · <a href="confidentialite.html">Confidentialité</a></p>
+    <p>Développé par <a href="https://gabfortin.com" target="_blank" rel="noopener">Gabriel Fortin</a> · <a href="confidentialite.html">Confidentialité</a></p>
   </div>
 </div>
 
@@ -535,16 +566,16 @@
   <div class="wrap">
     <p>Données : <a href="https://donnees.artm.quebec" target="_blank" rel="noopener">ARTM</a>, Données Québec, Données Montréal et flux GBFS public de BIXI, sous leurs licences ouvertes respectives · <a href="#methodologie">Méthodologie</a>.</p>
     <p>Initiative indépendante : ni produite ni approuvée par l'ARTM, la Ville de Montréal ni BIXI.</p>
-    <p>Développé par <a href="https://gabfortin.com" target="_blank" rel="noopener">Gabriel Fortin</a> · <a href="confidentialite.html">Confidentialité</a> · v<span data-version>1.4.0</span></p>
+    <p>Développé par <a href="https://gabfortin.com" target="_blank" rel="noopener">Gabriel Fortin</a> · <a href="confidentialite.html">Confidentialité</a> · v<span data-version>1.4.1</span></p>
   </div>
 </footer>
 
-<script src="vendor/carte/maplibre-gl.js?v=1.4.0"></script>
-<script src="vendor/carte/carte.js?v=1.4.0"></script>
-<script src="vendor/chartjs/chart.umd.min.js?v=1.4.0"></script>
-<script src="js/style-d.js?v=1.4.0"></script>
-<script src="js/chargement.js?v=1.4.0"></script>
-<script src="js/main.js?v=1.4.0"></script>
-<script src="js/apropos.js?v=1.4.0"></script>
+<script src="vendor/carte/maplibre-gl.js?v=1.4.1"></script>
+<script src="vendor/carte/carte.js?v=1.4.1"></script>
+<script src="vendor/chartjs/chart.umd.min.js?v=1.4.1"></script>
+<script src="js/style-d.js?v=1.4.1"></script>
+<script src="js/chargement.js?v=1.4.1"></script>
+<script src="js/main.js?v=1.4.1"></script>
+<script src="js/apropos.js?v=1.4.1"></script>
 </body>
 </html>

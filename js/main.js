@@ -1431,7 +1431,7 @@ function renderSources(meta) {
   const fresh = document.getElementById("hero-freshness");
   if (fresh) {
     const d = new Date(meta.updated_at).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" });
-    fresh.textContent = `Données à jour au ${d} · mises à jour automatiquement chaque lundi (enquêtes de mobilité : à chaque nouvelle édition, environ tous les 5 ans)`;
+    fresh.textContent = `Données à jour au ${d} · mises à jour automatiquement chaque lundi`;
     fresh.hidden = false;
   }
 }
