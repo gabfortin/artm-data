@@ -2,50 +2,19 @@
 
 /* ===========================================================================
    Utilitaires généraux
+   minus, fr, fetchJSON, cssVar, el et initNavEnhancements sont dans
+   js/style-d.js (modèle commun outils/communs/style-d.js), chargé avant.
    =========================================================================== */
 
-/* Nombres à la française : virgule décimale, espace insécable pour les
-   milliers, vrai signe moins « − » (U+2212) plutôt que le trait d'union. */
-function minus(str) {
-  return String(str).replace(/(^|[\s(\u00a0\u202f→])-(?=\d)/g, "$1\u2212");
-}
 function frFormatter(options) {
   const f = new Intl.NumberFormat("fr-CA", options);
   return { format: (v) => minus(f.format(v)) };
-}
-/* Remplace n.toFixed(d) pour l'affichage : « 14,78 » et non « 14.78 ». */
-function fr(n, d = 0) {
-  return minus(Number(n).toLocaleString("fr-CA", { minimumFractionDigits: d, maximumFractionDigits: d }));
 }
 const fmtInt = frFormatter();
 const fmtDec1 = frFormatter({ maximumFractionDigits: 1, minimumFractionDigits: 1 });
 const fmtMoney = frFormatter({ style: "currency", currency: "CAD" });
 /* Graduations et infobulles des graphiques en français (« 1 000 », « 0,5 »). */
 if (window.Chart) Chart.defaults.locale = "fr-CA";
-
-async function fetchJSON(path) {
-  const res = await fetch(path, { cache: "no-cache" });
-  if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
-  return res.json();
-}
-
-function cssVar(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-}
-
-function el(tag, attrs = {}, children = []) {
-  const node = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (k === "class") node.className = v;
-    else if (k === "html") node.innerHTML = v;
-    else node.setAttribute(k, v);
-  }
-  for (const c of [].concat(children)) {
-    if (c == null) continue;
-    node.appendChild(typeof c === "string" ? document.createTextNode(minus(c)) : c);
-  }
-  return node;
-}
 
 function monthKey(annee, mois) {
   return `${annee}-${String(mois).padStart(2, "0")}`;
@@ -75,50 +44,6 @@ function boroughLabel(name, maxLen = 22) {
 const redrawCallbacks = [];
 function registerRedraw(fn) { redrawCallbacks.push(fn); }
 
-/* Menu qui suit la lecture + lien direct vers chaque section */
-function initNavEnhancements() {
-  const links = new Map();
-  document.querySelectorAll('nav.main-nav a[href^="#"]').forEach((a) => links.set(a.getAttribute("href").slice(1), a));
-  // Le menu est court : une section sans lien propre (Métro & REM, Tarifs,
-  // Carte, BIXI) allume le lien de la section qui la précède.
-  const lienDe = new Map();
-  let courant = null;
-  document.querySelectorAll("section.panel[id]").forEach((sec) => {
-    courant = links.get(sec.id) || courant;
-    if (courant) lienDe.set(sec, courant);
-  });
-  const sections = [...lienDe.keys()];
-  if ("IntersectionObserver" in window && sections.length) {
-    const io = new IntersectionObserver((entries) => {
-      for (const e of entries) {
-        if (!e.isIntersecting) continue;
-        links.forEach((a) => a.removeAttribute("aria-current"));
-        lienDe.get(e.target).setAttribute("aria-current", "location");
-      }
-    }, { rootMargin: "-40% 0px -55% 0px" });
-    sections.forEach((sec) => io.observe(sec));
-  }
-
-  const live = el("p", { class: "sr-only", "aria-live": "polite" });
-  document.body.appendChild(live);
-  document.querySelectorAll("section.panel[id] .section-head h2").forEach((h2) => {
-    const id = h2.closest("section.panel").id;
-    const btn = el("button", { type: "button", class: "anchor-link", title: "Copier le lien vers cette section", "aria-label": `Copier le lien vers la section « ${h2.textContent.trim()} »` }, "#");
-    btn.addEventListener("click", () => {
-      const url = `${location.origin}${location.pathname}#${id}`;
-      history.replaceState(null, "", `#${id}`);
-      const done = () => {
-        btn.textContent = "Lien copié";
-        btn.classList.add("copied");
-        live.textContent = "Lien copié";
-        setTimeout(() => { btn.textContent = "#"; btn.classList.remove("copied"); live.textContent = ""; }, 1800);
-      };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, done);
-      else done();
-    });
-    h2.appendChild(btn);
-  });
-}
 
 function initTheme() {
   // Le thème suit l'appareil (prefers-color-scheme), sans bouton : les
@@ -1631,10 +1556,25 @@ function baseBarOptions({ yTitle, yMax, stacked, tooltipSuffix = "", tooltipDeci
    Boot
    =========================================================================== */
 
+/* Animation d'attente (base commune js/chargement.js, scène css/chargement-metro.css) :
+   une station de la ligne s'allume à chaque fichier reçu. FICHIERS_ATTENDUS =
+   fichiers lus avant l'affichage (la carte et BIXI se chargent ensuite). */
+const FICHIERS_ATTENDUS = 15;
+const SCENE_METRO = '<span class="m-reseau"><i></i><i></i><i></i><i></i></span><span class="m-ligne"></span>' +
+  '<span class="m-station m-s0"></span><span class="m-station m-s1"></span><span class="m-station m-s2"></span>' +
+  '<span class="m-station m-s3"></span><span class="m-station m-s4"></span><span class="m-rame"></span>';
+let attente = null;
+
 async function boot() {
   initTheme();
   initNavEnhancements();
   wireTableToggles();
+  attente = window.Chargement && Chargement.creer({
+    scene: SCENE_METRO, classe: "ch-metro", progres: true,
+    titre: "Chargement des données de l'ARTM…", detail: "Parts modales, achalandage, vélo, tarifs",
+  });
+  let recus = 0;
+  if (attente) fetchJSON.apresChaque = () => attente.progres(Math.min(1, ++recus / FICHIERS_ATTENDUS));
 
   const meta = await fetchJSON("data/meta.json");
   renderSources(meta);
@@ -1680,6 +1620,8 @@ async function boot() {
   renderHeroKPIs(achalandageSummary, mesuresBus.total_km, rev.total_km_realise, veloCentralAgg);
 
   await initInfrastructure(meta, mesuresBus, rev);
+  fetchJSON.apresChaque = null;
+  if (attente) { attente.progres(1); attente.fermer(); Chargement.arrivee(document.querySelector(".hero .wrap") || document.querySelector("main")); }
   initMap();
   initBixi();
 }
@@ -1687,6 +1629,8 @@ async function boot() {
 document.addEventListener("DOMContentLoaded", () => {
   boot().catch((err) => {
     console.error("Erreur au chargement du tableau de bord:", err);
+    fetchJSON.apresChaque = null;
+    if (attente) attente.erreur("Une erreur est survenue pendant le chargement des données.");
     const grid = document.getElementById("kpi-grid");
     if (grid) grid.innerHTML = '<div class="kpi-card"><div class="kpi-label">Une erreur est survenue pendant le chargement des données. Voir la console pour le détail.</div></div>';
   });

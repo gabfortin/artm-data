@@ -1,0 +1,52 @@
+/* ── Scène d’attente « ligne de métro » (base : css/chargement.css, modèle outils/communs/) ──
+   Les autres lignes du réseau en fond ; sur la ligne principale, une station
+   s'allume à chaque fichier reçu (vraie progression, --ch-p) et la rame
+   avance d'autant, en tanguant. */
+.ch-metro .ch-scene { border-radius: 28px; }
+.m-reseau { inset: 0; }
+.m-reseau i { position: absolute; height: 5px; border-radius: 3px; opacity: .5; }
+.m-reseau i:nth-child(1) { left: -10%; right: -10%; top: 24%; background: #00a650; transform: rotate(-8deg); }
+.m-reseau i:nth-child(2) { left: 10%; width: 5px; top: -10%; bottom: -10%; height: auto; background: #ee8b00; transform: rotate(14deg); left: 30%; }
+.m-reseau i:nth-child(3) { left: -10%; right: -10%; top: 78%; background: #0083ca; transform: rotate(6deg); }
+.m-reseau i:nth-child(4) { width: 5px; top: -10%; bottom: -10%; height: auto; left: 74%; background: #ffd200; transform: rotate(-10deg); }
+.m-ligne {
+  left: 8%; right: 8%; top: 50%; height: 8px; margin-top: -4px; border-radius: 4px;
+  background: rgba(var(--ch-rgb), .25);
+  box-shadow: 0 0 0 1px rgba(var(--ch-rgb), .35);
+}
+.m-ligne::after {                                   /* portion parcourue */
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; border-radius: inherit;
+  width: calc(var(--ch-p) * 100%); background: var(--ch-accent); box-shadow: 0 0 10px var(--ch-clair);
+  transition: width .4s cubic-bezier(.2, .9, .3, 1.1);
+}
+.m-station {
+  top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%;
+  background: #fff; border: 3px solid rgba(var(--ch-rgb), .4);
+  transition: border-color .3s, box-shadow .3s, transform .3s cubic-bezier(.2, .9, .3, 1.6);
+}
+.m-station::after {                                 /* allumée quand la progression la dépasse */
+  content: ""; position: absolute; inset: -3px; border-radius: 50%;
+  background: var(--ch-clair); box-shadow: 0 0 12px 3px rgba(var(--ch-rgb), .9);
+  opacity: clamp(0, (var(--ch-p) * 5 - var(--m-i)) * 8, 1);
+  transition: opacity .3s;
+}
+.m-s0 { left: 8%; --m-i: 0; } .m-s1 { left: 29%; --m-i: 1; } .m-s2 { left: 50%; --m-i: 2; }
+.m-s3 { left: 71%; --m-i: 3; } .m-s4 { left: 92%; --m-i: 4; }
+.m-rame {
+  top: 50%; width: 34px; height: 16px; margin: -26px 0 0 -17px;
+  left: calc(8% + var(--ch-p) * 84%);
+  border-radius: 8px 8px 4px 4px; background: var(--ch-accent);
+  box-shadow: 0 0 14px rgba(var(--ch-rgb), .8);
+  transition: left .5s cubic-bezier(.3, 0, .2, 1);
+  animation: m-tangue .5s ease-in-out infinite;
+}
+.m-rame::before {                                   /* fenêtres */
+  content: ""; position: absolute; left: 4px; right: 4px; top: 3px; height: 5px; border-radius: 2px;
+  background: repeating-linear-gradient(90deg, #eafff3 0 6px, transparent 6px 8px);
+}
+.m-rame::after {                                    /* phare */
+  content: ""; position: absolute; right: -10px; top: 6px; width: 14px; height: 6px; border-radius: 50%;
+  background: radial-gradient(closest-side, #fff, transparent); animation: m-phare .5s ease-in-out infinite alternate;
+}
+@keyframes m-tangue { 50% { transform: translateY(-2px); } }
+@keyframes m-phare { to { opacity: .4; } }

@@ -19,7 +19,7 @@
    vérifié par le hook (outils/verifier_communs.py). Ne pas le modifier ici :
    changer le modèle, puis le recopier dans chaque site. Les règles propres à
    un site vont juste APRÈS ce bloc (elles l'emportent à spécificité égale). */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+@import url("../fonts/polices.css");   /* Inter hébergée sur le site (outils/communs/polices/) */
 
 :root {
   --accent:        #1DB860;

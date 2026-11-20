@@ -94,8 +94,12 @@ sources ARTM, Ville, STM → scripts/update_data.py → data/*.json, *.geojson �
 |---|---|
 | `index.html` | Page unique, sections ancrées |
 | `confidentialite.html` | Politique de confidentialité |
-| `css/style.css` | Mise en page, composants, couleurs des séries |
+| `css/style-d.css` | Base commune du style D (copie de `outils/communs/style-d.css`, ne pas modifier ici) : mise en page, composants, couleurs des séries |
+| `css/style.css` | Propre au site : couleurs des lignes de métro, carte, barre de progression, case « arrondissements centraux », BIXI en direct |
 | `css/hybride.css` | Habillage du style D (Inter, accent vert, verre léger, mode sombre) et blocs communs |
+| `js/chargement.js`, `css/chargement.css` | Animation d'attente : base commune (copie de `outils/communs/`) |
+| `css/chargement-metro.css` | Scène d'attente : ligne de métro, une station par fichier reçu |
+| `js/style-d.js` | Utilitaires communs du style D (copie de `outils/communs/style-d.js`) : nombres à la française, `el`, menu qui suit la lecture |
 | `js/main.js` | Tout le rendu : graphiques Chart.js, carte, BIXI en direct |
 | `vendor/carte/` | Composant de carte commun (modèle `~/Developer/outils/communs/carte/`) : API de Leaflet dessinée par MapLibre, fond OpenFreeMap |
 | `js/apropos.js`, `js/titre-barre.js` | Composants communs (bouton « i », titre dans la barre) |
@@ -130,7 +134,7 @@ sa date) si un service externe est ajouté.
 
 ## Crédits
 
-- [Chart.js](https://www.chartjs.org) 4.4.4 (MIT), chargé depuis jsDelivr
+- [Chart.js](https://www.chartjs.org) 4.4.4 (MIT), hébergé dans `vendor/chartjs/` (modèle commun `outils/communs/chartjs/`) ; police Inter hébergée dans `fonts/`
 - [MapLibre GL JS](https://maplibre.org) (BSD-3-Clause), hébergé dans `vendor/carte/` ; fond [OpenFreeMap](https://openfreemap.org), © [OpenMapTiles](https://www.openmaptiles.org)
 - Données du fond de carte © les contributeurs d'[OpenStreetMap](https://www.openstreetmap.org/copyright) (ODbL)
 - Données © ARTM, Ville de Montréal, STM et BIXI, sous leurs licences ouvertes respectives
