@@ -20,7 +20,11 @@
     "vendor/chartjs/chart.umd.min.js": "chartjs/chart.umd.min.js",
     "vendor/chartjs/LICENSE-chartjs.md": "chartjs/LICENSE-chartjs.md",
     "css/chargement.css": "chargement.css",
-    "js/chargement.js": "chargement.js"
+    "js/chargement.js": "chargement.js",
+    "fonts/plex-sans.css": "polices/plex-sans.css",
+    "fonts/plex-sans-latin.woff2": "polices/plex-sans-latin.woff2",
+    "fonts/plex-sans-latin-ext.woff2": "polices/plex-sans-latin-ext.woff2",
+    "fonts/OFL-IBMPlexSans.txt": "polices/OFL-IBMPlexSans.txt"
   },
   "blocs": {
     "css/hybride.css": [
